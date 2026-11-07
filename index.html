@@ -50,6 +50,9 @@ input{font:inherit;color:var(--fg)}
 .vbox{position:relative;aspect-ratio:16/9;background:#000;max-height:27vh;width:100%}
 .vbox video{position:absolute;inset:0;width:100%;height:100%;background:#000}
 .vstate{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:16px;font-weight:600;font-size:13px}
+.vstate .pill{pointer-events:auto;margin-top:10px;height:34px}
+.diag{font:12px/1.45 ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;white-space:pre-wrap;word-break:break-all;color:var(--fg2)}
+.diag b{color:var(--violet2)}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;animation:sp 0.8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .info{padding:8px 14px 10px;display:flex;flex-direction:column;gap:4px}
@@ -357,6 +360,7 @@ if (cfg.fmt == null) cfg.fmt = 'm3u8';        // l'iPhone lit le HLS (.m3u8), pa
 if (cfg.logos == null) cfg.logos = true;
 if (cfg.autoq == null) cfg.autoq = true;
 if (cfg.relay == null) cfg.relay = '';
+if (cfg.relayVideo == null) cfg.relayVideo = false;
 function saveCfg() { lsSet('brutus.cfg', cfg); }
 
 function sameSource(a, b) {
@@ -508,6 +512,10 @@ function xtApi(params, timeout) {
   return http(S.xt.server + '/player_api.php?' + q, true, timeout || 30000);
 }
 function xtBase(kind) { return S.xt.server + '/' + kind + '/' + encodeURIComponent(S.xt.user) + '/' + encodeURIComponent(S.xt.pwd) + '/'; }
+function playUrl(url) {
+  var u = liveUrl(url);
+  return (cfg.relay && cfg.relayVideo) ? cfg.relay + encodeURIComponent(u) : u;
+}
 function liveUrl(url) {
   if (S.xt && url.indexOf(xtBase('live')) === 0) return url.replace(/\.(ts|m3u8)$/, '.' + cfg.fmt);
   return url;
@@ -892,9 +900,11 @@ function setVState(s) {
   vstate = s;
   var el = $('vstate');
   el.innerHTML = s === 'buffering' ? '<span class="spin"></span>'
-    : s === 'error' ? 'Lecture impossible : flux indisponible ou format non pris en charge par l\'iPhone' +
-      (S.xt && cfg.fmt === 'ts' ? '<br>Passe le format du direct sur HLS dans ⚙ Paramètres.' : '')
+    : s === 'error' ? '<div>Lecture impossible' + (S.lastErr ? ' (' + esc(S.lastErr) + ')' : '') +
+      (S.xt && cfg.fmt === 'ts' ? '<br>Passe le format du direct sur HLS dans ⚙ Paramètres.' : '') +
+      '<br><button class="pill p" id="bDiag">Diagnostic</button></div>'
     : '';
+  var bd = $('bDiag'); if (bd) bd.onclick = diagnose;
   var ic = (s === 'playing' || s === 'buffering') ? ICON.pause : ICON.play;
   $('bPlay').innerHTML = ic; $('ovPlay').innerHTML = ic;
 }
@@ -908,10 +918,16 @@ function play(it, ctx, auto) {
   S.aq.loaded = Date.now(); S.aq.stall = null;
   document.body.classList.add('playing');
   $('ph').hidden = true; $('vcard').hidden = false; $('ctrl').hidden = false;
+  S.lastErr = '';
   setVState('buffering');
-  video.src = liveUrl(it.url);
+  video.src = playUrl(it.url);
   var pr = video.play();
-  if (pr && pr.catch) pr.catch(function () { setVState('paused'); });
+  if (pr && pr.catch) pr.catch(function (e) {
+    if (S.playing !== it) return;
+    if (e && e.name === 'NotAllowedError') return setVState('paused');
+    S.lastErr = (e && e.name) || 'erreur';
+    setVState('error');
+  });
   S.playProgs = [];
   renderInfo(); updateFav(); drawList(true);
   setStatus('Lecture : ' + it.name);
@@ -952,7 +968,13 @@ video.addEventListener('playing', function () { setVState('playing'); aqOnState(
 video.addEventListener('pause', function () { if (S.playing && vstate !== 'error') setVState('paused'); });
 video.addEventListener('waiting', function () { setVState('buffering'); aqOnState('buffering'); });
 video.addEventListener('stalled', function () { aqOnState('buffering'); });
-video.addEventListener('error', function () { if (S.playing) { setVState('error'); aqOnState('error'); } });
+var MEDIA_ERR = { 1: 'lecture annulée', 2: 'erreur réseau', 3: 'décodage impossible', 4: 'format ou adresse refusés' };
+video.addEventListener('error', function () {
+  if (!S.playing) return;
+  var c = video.error && video.error.code;
+  S.lastErr = MEDIA_ERR[c] || ('code ' + c);
+  setVState('error'); aqOnState('error');
+});
 video.addEventListener('ended', function () { setVState('paused'); });
 video.addEventListener('timeupdate', function () {
   var d = video.duration, ok = isFinite(d) && d > 0;
@@ -963,6 +985,62 @@ video.addEventListener('timeupdate', function () {
   }
 });
 function fmtT(s) { s = Math.floor(s); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + x).slice(-2); }
+
+// ============================================================ diagnostic de lecture
+function mask(u) {
+  u = String(u || '');
+  if (S.xt) { [S.xt.pwd, encodeURIComponent(S.xt.pwd), S.xt.user, encodeURIComponent(S.xt.user)].forEach(function (x) { if (x && x.length > 2) u = u.split(x).join('***'); }); }
+  return u;
+}
+function diagnose() {
+  var it = S.playing; if (!it) return;
+  var url = liveUrl(it.url), lines = [];
+  function out() {
+    var b = $('diagBody'); if (b) b.innerHTML = lines.join('\n');
+  }
+  sheet(head('Diagnostic de lecture') + '<p class="hint">Fais une capture d\'écran de ce rapport et envoie-la. Ton identifiant et ton mot de passe sont masqués.</p>' +
+    '<div class="sb2"><div class="diag" id="diagBody"></div></div>' +
+    '<div class="btns"><button class="pill" id="dCopy">Copier</button><button class="pill p" data-close>Fermer</button></div>', function (sh) {
+    sh.querySelector('#dCopy').onclick = function () {
+      var t = $('diagBody').textContent;
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast('Rapport copié'); }, function () { toast('Copie impossible, fais une capture'); });
+    };
+  });
+  lines.push('<b>Chaîne</b> ' + esc(it.name));
+  lines.push('<b>Adresse</b> ' + esc(mask(url)));
+  lines.push('<b>Page</b> ' + esc(location.protocol) + ' · <b>Format</b> ' + cfg.fmt + ' · <b>Relais</b> ' + (cfg.relay ? (cfg.relayVideo ? 'API + vidéo' : 'API seulement') : 'aucun'));
+  lines.push('<b>Erreur du lecteur</b> ' + esc(S.lastErr || 'aucune') + (video.error ? ' (code ' + video.error.code + (video.error.message ? ' : ' + esc(video.error.message) : '') + ')' : ''));
+  lines.push('<b>HLS natif</b> ' + (video.canPlayType('application/vnd.apple.mpegurl') || 'non') + ' · <b>MSE</b> ' + (window.ManagedMediaSource ? 'ManagedMediaSource' : window.MediaSource ? 'MediaSource' : 'non'));
+  if (/^http:/i.test(url) && location.protocol === 'https:') lines.push('<b>⚠</b> l\'adresse du flux est en http:// : l\'iPhone la bloque dans une page https.');
+  lines.push('<b>Test réseau</b> en cours…');
+  out();
+  var ctl = new AbortController(); var tm = setTimeout(function () { ctl.abort(); }, 15000);
+  fetch(url, { signal: ctl.signal, cache: 'no-store' }).then(function (r) {
+    lines.pop();
+    lines.push('<b>Réponse</b> ' + r.status + (r.redirected ? ' (redirigé)' : ''));
+    lines.push('<b>Adresse finale</b> ' + esc(mask(r.url)));
+    if (/^http:/i.test(r.url) && location.protocol === 'https:') lines.push('<b>⚠</b> le serveur redirige vers une adresse http:// non sécurisée.');
+    lines.push('<b>Type</b> ' + esc(r.headers.get('content-type') || '?'));
+    var ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (/mpegurl|text|json|html/.test(ct) || /\.m3u8/i.test(r.url)) {
+      return r.text().then(function (t) {
+        var head5 = t.split(/\r?\n/).filter(Boolean).slice(0, 8).join('\n');
+        lines.push('<b>Début du contenu</b>\n' + esc(mask(head5).slice(0, 700)));
+        var seg = /^\s*#EXTM3U/.test(t) && t.split(/\r?\n/).filter(function (l) { return l && l[0] !== '#'; })[0];
+        if (seg) {
+          var su = new URL(seg, r.url).href;
+          lines.push('<b>1er segment</b> ' + esc(mask(su)));
+          if (/^http:/i.test(su) && location.protocol === 'https:') lines.push('<b>⚠</b> les segments sont en http:// : bloqués par l\'iPhone dans une page https.');
+        }
+      });
+    }
+    try { ctl.abort(); } catch (e) {}
+  }).catch(function (e) {
+    lines.pop();
+    lines.push('<b>Test réseau</b> échec : ' + esc(e.name + ' ' + e.message));
+    lines.push('→ soit le flux redirige vers http://, soit le serveur refuse les pages web. Le relais (⚙ Paramètres, avec « vidéo par le relais ») contourne les deux.');
+  }).finally(function () { clearTimeout(tm); out(); });
+}
 
 // ============================================================ qualité automatique
 function aqOnState(st) {
@@ -1147,7 +1225,7 @@ function renamePlaylist(i) {
 }
 
 function openSettings() {
-  var st = { fmt: cfg.fmt, autoq: cfg.autoq, logos: cfg.logos };
+  var st = { fmt: cfg.fmt, autoq: cfg.autoq, logos: cfg.logos, relayVideo: cfg.relayVideo };
   function radio(k, v, t) { return '<button class="radio' + (st[k] === v ? ' on' : '') + '" data-k="' + k + '" data-v="' + v + '"><i></i>' + t + '</button>'; }
   function sw(k, t) { return '<button class="sw' + (st[k] ? ' on' : '') + '" data-sw="' + k + '"><span>' + t + '</span><i></i></button>'; }
   sheet(head('Paramètres de lecture') + '<div class="sb2">' +
@@ -1158,14 +1236,15 @@ function openSettings() {
     '<div class="cap">Relais (seulement si la connexion est refusée)</div>' +
     '<p class="hint">Certains serveurs refusent les pages web. Colle ici l\'adresse de ton relais, par exemple https://brutus.ton-nom.workers.dev/?url=. Laisse vide sinon.</p>' +
     '<label class="field"><input id="fR" type="url" value="' + esc(cfg.relay) + '" placeholder="https://…/?url=" autocomplete="off" autocapitalize="off" spellcheck="false"></label>' +
+    sw('relayVideo', 'Faire passer aussi la vidéo par le relais') +
     '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Enregistrer</button></div></div>', function (sh) {
     sh.querySelectorAll('.radio').forEach(function (b) {
       b.onclick = function () { st[b.dataset.k] = b.dataset.v; sh.querySelectorAll('.radio[data-k="' + b.dataset.k + '"]').forEach(function (x) { x.classList.toggle('on', x === b); }); };
     });
     sh.querySelectorAll('.sw').forEach(function (b) { b.onclick = function () { st[b.dataset.sw] = !st[b.dataset.sw]; b.classList.toggle('on', st[b.dataset.sw]); }; });
     sh.querySelector('#ok').onclick = function () {
-      var relaunch = st.fmt !== cfg.fmt;
-      cfg.fmt = st.fmt; cfg.autoq = st.autoq; cfg.logos = st.logos; cfg.relay = $('fR').value.trim();
+      var relaunch = st.fmt !== cfg.fmt || st.relayVideo !== cfg.relayVideo || $('fR').value.trim() !== cfg.relay;
+      cfg.relayVideo = st.relayVideo; cfg.fmt = st.fmt; cfg.autoq = st.autoq; cfg.logos = st.logos; cfg.relay = $('fR').value.trim();
       saveCfg(); closeSheet(); drawList(true);
       if (relaunch && S.playing) play(S.playing, S.aq && S.aq.ctx);
       toast('Paramètres enregistrés');
