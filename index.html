@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>BrutusIPTV</title>
+<meta name="theme-color" content="#0b0b0e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BrutusIPTV">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+/* Palette bleu / violet identique à la version PC */
+:root{
+  --bg:#0b0b0e;--panel:#141317;--card2:#1c1b22;--hover:#1d1c23;--selrow:#f2f2f4;--seltext:#111114;
+  --chip:#2b2a32;--entry:#1b1a20;--line:#27262d;--tile:#202027;--fg:#f4f4f6;--fg2:#dedee2;--dim:#8d8b96;--dim2:#5d5b66;
+  --blue:#3b1a7a;--violet:#5b21b6;--violet2:#a78bfa;--accent:#6d28d9;--live:#8b5cf6;--green:#3ddc97;--red:#ff4d6d;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:var(--fg)}
+[hidden]{display:none!important}
+.app{height:100%;display:flex;flex-direction:column;gap:9px;padding:calc(var(--st) + 8px) max(14px,var(--sr)) calc(var(--sb) + 4px) max(14px,var(--sl))}
+
+/* en-tête */
+.hdr{display:flex;align-items:center;gap:8px}
+.brand{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.logo{display:flex;align-items:center;gap:8px}
+.logo img{width:30px;height:30px;border-radius:8px}
+.logo b{font-size:21px;font-weight:700}.logo span{font-size:21px;color:var(--dim)}
+.logo i{width:6px;height:6px;border-radius:50%;background:var(--live);display:inline-block;margin-left:2px;align-self:flex-end;margin-bottom:6px}
+.plchip{align-self:flex-start;display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--dim);max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.plchip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);flex:none}
+.acts{display:flex;gap:4px;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:99px;flex:none}
+.ib{width:38px;height:38px;border-radius:50%;background:var(--card2);display:grid;place-items:center;flex:none}
+.ib svg{width:17px;height:17px;fill:currentColor}
+.ib.p,.ib.on{background:var(--violet);color:#fff}
+.ib.big{width:42px;height:42px}.ib.big svg{width:20px;height:20px}
+.ib:active{filter:brightness(1.3)}
+.avatar{font-weight:700;font-size:15px}
+
+/* lecteur */
+.vcard{border-radius:22px;overflow:hidden;background:#000;border:1px solid var(--line);flex:none}
+.vbox{position:relative;aspect-ratio:16/9;background:#000;max-height:27vh;width:100%}
+.vbox video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.vstate{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;padding:16px;font-weight:600;font-size:13px}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.info{padding:8px 14px 10px;display:flex;flex-direction:column;gap:4px}
+.irow{display:flex;align-items:center;gap:8px;min-width:0}
+.tag{display:flex;align-items:center;gap:5px;background:var(--chip);border-radius:99px;padding:4px 9px;font-size:10px;font-weight:700;flex:none}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--live)}
+.cname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptitle{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptitle.dim{color:var(--dim)}
+.prog{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:600;color:var(--dim)}
+.bar{flex:1;height:3px;border-radius:2px;background:#3a3942;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--live))}
+.next{font-size:11px;color:var(--violet2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrl{display:flex;align-items:center;gap:6px;padding:5px 7px;background:var(--panel);border:1px solid var(--line);border-radius:30px;flex:none}
+.ctrl .sp{flex:1}
+.pill{height:38px;padding:0 15px;border-radius:99px;background:var(--card2);font-size:14px;font-weight:600;white-space:nowrap;flex:none}
+.pill.p,.pill.on{background:var(--violet);color:#fff}
+.ph{height:132px;border-radius:22px;border:1px solid var(--line);flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;padding:0 14px;
+  background:radial-gradient(ellipse at center,#1b1233 0%,#110c1e 45%,#000 100%)}
+.ph .ib{width:50px;height:50px}
+.ph b{font-size:16px}.ph small{font-size:11px;color:var(--dim)}
+
+/* navigation, recherche */
+.nav{display:flex;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:99px;flex:none}
+.nav button{flex:1;height:38px;border-radius:99px;font-weight:600;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.nav button.on{background:var(--chip);color:#fff}
+.nav button.on::after{content:"";width:4px;height:4px;border-radius:50%;background:var(--live)}
+.field{display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;background:var(--entry);border-radius:99px;flex:none;border:1px solid transparent}
+.field:focus-within{border-color:var(--violet)}
+.field svg{width:16px;height:16px;fill:var(--dim);flex:none}
+.field input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:16px}
+.field input::placeholder{color:var(--dim2)}
+.field .clr{color:var(--dim2);font-size:18px;line-height:1}
+
+/* liste */
+.lp{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:26px;overflow:hidden}
+.lh{display:flex;align-items:center;gap:6px;padding:10px 12px 6px;font-size:11px;font-weight:600;color:var(--dim)}
+.lh .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.03em}
+.lh .c{color:var(--dim2)}
+.back{width:30px;height:30px;border-radius:50%;background:var(--card2);display:grid;place-items:center;color:var(--fg)}
+.back svg{width:14px;height:14px;fill:currentColor}
+.list{flex:1;overflow-y:auto;position:relative;-webkit-overflow-scrolling:touch;padding:0 6px}
+.list .sizer{position:relative;width:100%}
+.row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:16px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.row.cat{height:46px}.row.it{height:56px}
+.row:active{background:var(--hover)}
+.row.sel{background:var(--selrow);color:var(--seltext)}
+.row .n{min-width:22px;font-size:11px;font-weight:600;color:var(--dim);text-align:center}
+.row .tx{flex:1;min-width:0}
+.row .nm{font-size:15px;font-weight:600;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .sb{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row.sel .nm{color:var(--seltext)}.row.sel .sb{color:var(--violet)}.row.sel .n{color:#8a8698}
+.row .chev{color:var(--dim2);font-size:18px}
+.row .dot{width:8px;height:8px;border-radius:50%;background:var(--live);flex:none}
+.row .fav{color:var(--violet2);font-size:11px}.row.sel .fav{color:var(--violet)}
+.tile{width:58px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;overflow:hidden;font-size:14px;font-weight:600;color:#fff;position:relative}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px;background:var(--tile)}
+.tile.sq{width:38px;height:38px}
+.tile.icon{background:var(--chip);color:var(--violet2);font-size:16px}
+.empty{padding:40px 20px;text-align:center;color:var(--dim2);font-size:14px}
+.status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--dim2);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;min-height:14px}
+.status .spin{width:11px;height:11px;border-width:2px;flex:none}
+
+/* fenêtres (bas de l'écran) */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fd .15s}
+@keyframes fd{from{opacity:0}}
+.sheet{background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;width:100%;max-width:640px;max-height:92%;display:flex;flex-direction:column;
+  padding:6px max(20px,var(--sr)) calc(var(--sb) + 14px) max(20px,var(--sl));animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 6px;flex:none}
+.sh{display:flex;align-items:center;gap:8px;padding:8px 0 6px;flex:none}
+.sh h2{flex:1;margin:0;font-size:21px;font-weight:600}
+.sb2{overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.cap{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.hint{font-size:13px;color:var(--dim);margin:0 0 6px}
+.opt{display:flex;align-items:center;gap:14px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;width:100%;text-align:left;margin-top:10px}
+.opt .ic{width:44px;height:44px;border-radius:50%;background:var(--chip);display:grid;place-items:center;color:var(--violet2);font-size:18px;flex:none}
+.opt b{display:block;font-size:16px}.opt small{display:block;font-size:13px;color:var(--dim);margin-top:2px}
+.btns{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap}
+.radio,.sw{display:flex;align-items:center;gap:12px;padding:10px 0;width:100%;text-align:left;font-size:15px}
+.radio i{width:20px;height:20px;border-radius:50%;border:2px solid var(--dim2);flex:none;display:grid;place-items:center}
+.radio.on i{border-color:var(--violet)}.radio.on i::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--violet)}
+.sw span{flex:1}
+.sw i{width:46px;height:28px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--dim);transition:transform .15s,background .15s}
+.sw.on i{background:var(--violet)}.sw.on i::after{transform:translateX(18px);background:#fff}
+.plrow{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;width:100%;text-align:left}
+.plrow:active{background:var(--hover)}
+.plrow .tx{flex:1;min-width:0}.plrow b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.plrow small{font-size:11px;font-weight:600;color:var(--dim)}
+.plrow.cur b{color:var(--violet2)}
+.mini{height:30px;padding:0 11px;border-radius:99px;background:var(--card2);font-size:12px;font-weight:600}
+.mini.del{color:var(--red)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:6px}
+.ep{padding:12px;border-radius:16px;background:var(--panel);border:1px solid var(--line);margin-bottom:8px}
+.ep.live{background:var(--card2)}
+.ep .tm{font-size:12px;font-weight:600;color:var(--dim);display:flex;gap:8px;align-items:center}
+.ep.live .tm{color:var(--violet2)}
+.ep .tm em{font-style:normal;font-size:9px;font-weight:700;color:#fff;background:var(--violet);padding:3px 7px;border-radius:99px}
+.ep b{display:block;font-size:15px;margin-top:4px}.ep p{margin:4px 0 0;font-size:13px;color:var(--dim)}
+.menu{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.menu button{padding:14px;border-radius:14px;background:var(--panel);text-align:left;font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(var(--sb) + 70px);transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:10px 16px;font-size:13px;font-weight:600;z-index:60;max-width:90%;text-align:center;animation:fd .2s}
+
+/* match */
+.mtop{display:flex;align-items:center;gap:8px}
+.mtop .lbl{flex:1;font-size:12px;font-weight:700;color:var(--violet2)}
+.score{display:flex;align-items:flex-start;background:var(--card2);border-radius:16px;padding:14px 10px;margin-top:10px;min-height:128px}
+.score .tm{width:92px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:13px;font-weight:600}
+.score .mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.score .sc{font-size:28px;font-weight:700}
+.score .st{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--line)}
+.score .st.in{background:var(--violet)}.score .st.in::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red)}
+.score .lg{font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.score.none{align-items:center;justify-content:center;color:var(--dim);font-size:14px;text-align:center}
+.tvrow{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:11px;font-weight:600;color:var(--dim)}
+.tvrow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tvrow .pill{height:32px;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.seg{display:flex;padding:4px;background:var(--entry);border-radius:99px;margin-bottom:8px}
+.seg button{flex:1;height:32px;border-radius:99px;font-size:13px;font-weight:600;color:var(--dim)}
+.seg button.on{background:var(--chip);color:#fff}
+.stat{margin:0 4px 14px}
+.stat .l{display:flex;font-size:14px;font-weight:600;align-items:baseline}
+.stat .l span{flex:1;text-align:center;font-size:13px;font-weight:400;color:var(--dim)}
+.stat .l .lo{color:var(--dim)}
+.sbars{display:flex;gap:6px;margin-top:6px;height:5px}
+.sbars div{flex:1;background:var(--line);border-radius:3px;display:flex;overflow:hidden}
+.sbars div:first-child{justify-content:flex-end}
+.sbars i{display:block;height:100%;border-radius:3px}
+.pos{height:8px;border-radius:4px;background:var(--violet);margin-top:6px;overflow:hidden}.pos i{display:block;height:100%;background:var(--blue)}
+.ev{display:flex;gap:10px;align-items:flex-start;margin:0 4px 12px}
+.ev .mn{min-width:40px;height:24px;padding:0 8px;border-radius:99px;background:var(--card2);font-size:11px;font-weight:600;display:grid;place-items:center;flex:none}
+.ev .ic{width:18px;height:24px;display:grid;place-items:center;flex:none}
+.ev b{display:block;font-size:14px}.ev b.goal{color:var(--violet2)}.ev p{margin:3px 0 0;font-size:13px;color:var(--dim)}
+.card{display:block;width:10px;height:15px;border-radius:2px}
+.pl{display:flex;align-items:center;gap:10px;height:46px;padding:0 10px;border-radius:10px;background:var(--panel);margin-bottom:4px}
+.pl.st{background:var(--card2)}
+.pl .j{width:26px;height:26px;border-radius:50%;background:var(--entry);font-size:11px;font-weight:600;display:grid;place-items:center;flex:none}
+.pl .tx{flex:1;min-width:0}.pl b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pl small{display:block;font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl .r{width:40px;height:24px;border-radius:8px;font-size:13px;font-weight:700;color:#0b0a1a;display:grid;place-items:center;flex:none}
+.team{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;margin:12px 0 8px}
+.mrow{display:flex;align-items:center;gap:12px;height:58px;padding:0 12px;border-radius:16px;width:100%;text-align:left}
+.mrow.sel{background:var(--selrow);color:var(--seltext)}
+.mrow .tx{flex:1;min-width:0}.mrow b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow small{display:block;font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.mrow small.tv{color:var(--violet2)}.mrow.sel small.tv{color:var(--violet)}
+.foot{font-size:11px;font-weight:600;color:var(--dim2);padding-top:8px;white-space:pre-line;flex:none}
+
+/* paysage pendant la lecture = plein écran, comme sur PC */
+@media (orientation:landscape){
+  body.playing .app{padding:0;gap:0}
+  body.playing .hdr,body.playing .nav,body.playing .fieldwrap,body.playing .status,body.playing .ctrl,body.playing .ph{display:none!important}
+  body.playing .vcard{position:fixed;inset:0;border:0;border-radius:0;z-index:20}
+  body.playing .vbox{max-height:none;height:100%;aspect-ratio:auto}
+  body.playing .vcard .info{display:none}
+  body.playing .lp{position:fixed;top:0;bottom:0;right:0;width:min(380px,55vw);z-index:30;border-radius:0;border-width:0 0 0 1px;
+    padding:calc(var(--st) + 8px) var(--sr) var(--sb) 0;transform:translateX(105%);transition:transform .2s}
+  body.playing.side .lp{transform:none}
+  body.playing .ov{display:flex}
+}
+.ov{display:none;position:fixed;inset:0;z-index:25;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 14px) max(18px,var(--sr)) calc(var(--sb) + 14px) max(18px,var(--sl));
+  background:linear-gradient(180deg,rgba(0,0,0,.55),transparent 25%,transparent 55%,rgba(0,0,0,.7));transition:opacity .2s}
+.ov.off{opacity:0}
+.ov .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ov .bar2{background:rgba(20,19,23,.94);border:1px solid var(--line);border-radius:24px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:760px;width:100%;margin:0 auto}
+.ov .bar2 .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ov .seek{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--dim)}
+.ov .seek input{flex:1;accent-color:var(--live)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="hdr">
+    <div class="brand">
+      <div class="logo"><img src="icon-180.png" alt=""><b>Brutus</b><span>IPTV</span><i></i></div>
+      <div class="plchip" id="plchip" hidden></div>
+    </div>
+    <div class="acts">
+      <button class="ib p avatar" id="avatar" aria-label="Mes playlists">B</button>
+      <button class="ib" id="btnAdd" aria-label="Ajouter une playlist"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>
+      <button class="ib" id="btnSet" aria-label="Paramètres"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3h-4l-.4 2.7a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 0 0 1.7 1L11 21h4l.4-2.7a7.6 7.6 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+    </div>
+  </header>
+
+  <div class="ph" id="ph">
+    <div class="ib p"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    <b>Choisis une chaîne</b>
+    <small>Touche une chaîne : lecture · appui long : favori et guide TV · tourne le téléphone : plein écran</small>
+  </div>
+
+  <div class="vcard" id="vcard" hidden>
+    <div class="vbox" id="vbox">
+      <video id="video" playsinline webkit-playsinline preload="auto"></video>
+      <div class="vstate" id="vstate"></div>
+    </div>
+    <div class="info" id="info"></div>
+  </div>
+  <div class="ctrl" id="ctrl" hidden>
+    <button class="ib big p" id="bPlay" aria-label="Lecture / pause"></button>
+    <button class="ib" id="bStop" aria-label="Arrêter"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+    <button class="ib" id="bFav" aria-label="Favori"></button>
+    <span class="sp"></span>
+    <button class="pill" id="bMatch">⚽ Match</button>
+    <button class="ib" id="bFs" aria-label="Plein écran"><svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg></button>
+  </div>
+
+  <div class="nav" id="nav" hidden></div>
+  <div class="fieldwrap">
+    <label class="field"><svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>
+      <input id="search" type="search" placeholder="Rechercher…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      <button class="clr" id="clr" hidden aria-label="Effacer">×</button></label>
+  </div>
+
+  <section class="lp" id="lp">
+    <div class="lh">
+      <button class="back" id="back" hidden aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z"/></svg></button>
+      <span class="t" id="ltitle">CATÉGORIES</span><span class="c" id="lcount"></span>
+    </div>
+    <div class="list" id="list"><div class="sizer" id="sizer"></div></div>
+  </section>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="ov off" id="ov">
+  <div class="top">
+    <button class="pill" id="ovSide">☰ Chaînes</button>
+    <button class="ib" id="ovClose" aria-label="Quitter le plein écran"><svg viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z"/></svg></button>
+  </div>
+  <div class="bar2">
+    <div id="ovInfo"></div>
+    <div class="seek" id="ovSeek" hidden><span id="tCur"></span><input type="range" id="seek" min="0" max="1000" value="0"><span id="tLen"></span></div>
+    <div class="row2">
+      <button class="ib" id="ovBack" hidden><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></button>
+      <button class="ib big p" id="ovPlay"></button>
+      <button class="ib" id="ovFwd" hidden><svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/></svg></button>
+      <button class="ib" id="ovFav"></button>
+      <button class="pill" id="ovMatch">⚽ Matchs</button>
+    </div>
+  </div>
+</div>
+
+<div id="sheets"></div>
+
+<script>
+(function () {
+'use strict';
+
+// ============================================================ utilitaires
+var $ = function (id) { return document.getElementById(id); };
+var APP = 'BrutusIPTV';
+var EPG_HOURS = 24, EPG_DESC_MAX = 300;
+var ICON = {
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+  starOn: '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+  close: '<svg viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z"/></svg>'
+};
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function toInt(v, d) { var n = parseInt(v, 10); return isNaN(n) ? (d || 0) : n; }
+function now() { return Date.now() / 1000; }
+function hm(ts) { var d = new Date(ts * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function b64(s) {
+  if (!s) return '';
+  try { return decodeURIComponent(escape(atob(s))); } catch (e) { return s; }
+}
+function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('Stockage plein : réglage non enregistré'); } }
+
+var toastTimer = null;
+function toast(t) {
+  var el = document.querySelector('.toast');
+  if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+  el.textContent = t;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.remove(); }, 3200);
+}
+function setStatus(t, busy) {
+  $('status').innerHTML = (busy ? '<span class="spin"></span>' : '') + '<span>' + esc(t) + '</span>';
+}
+
+// Petite base IndexedDB pour les fichiers M3U importés (trop gros pour localStorage)
+var idb = {
+  db: null,
+  open: function () {
+    if (this.db) return Promise.resolve(this.db);
+    var self = this;
+    return new Promise(function (ok, ko) {
+      var r = indexedDB.open('brutus', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('files'); };
+      r.onsuccess = function () { self.db = r.result; ok(r.result); };
+      r.onerror = function () { ko(r.error); };
+    });
+  },
+  put: function (k, v) { return this.open().then(function (db) { return new Promise(function (ok, ko) { var t = db.transaction('files', 'readwrite'); t.objectStore('files').put(v, k); t.oncomplete = ok; t.onerror = function () { ko(t.error); }; }); }); },
+  get: function (k) { return this.open().then(function (db) { return new Promise(function (ok, ko) { var r = db.transaction('files').objectStore('files').get(k); r.onsuccess = function () { ok(r.result); }; r.onerror = function () { ko(r.error); }; }); }); },
+  del: function (k) { return this.open().then(function (db) { return new Promise(function (ok) { var t = db.transaction('files', 'readwrite'); t.objectStore('files').delete(k); t.oncomplete = ok; t.onerror = ok; }); }); }
+};
+
+// ============================================================ réglages
+var cfg = lsGet('brutus.cfg', {});
+cfg.favs = cfg.favs || [];
+cfg.playlists = cfg.playlists || [];
+if (cfg.fmt == null) cfg.fmt = 'm3u8';        // l'iPhone lit le HLS (.m3u8), pas le .ts brut
+if (cfg.logos == null) cfg.logos = true;
+if (cfg.autoq == null) cfg.autoq = true;
+if (cfg.relay == null) cfg.relay = '';
+function saveCfg() { lsSet('brutus.cfg', cfg); }
+
+function sameSource(a, b) {
+  if (!a || !b || a.type !== b.type) return false;
+  if (a.type === 'xtream') return a.server === b.server && a.user === b.user;
+  return a.src === b.src;
+}
+
+// ============================================================ réseau
+function relayed(url) { return cfg.relay ? cfg.relay + encodeURIComponent(url) : url; }
+function netErr(e) {
+  if (e && e.name === 'AbortError') return new Error('le serveur ne répond pas (délai dépassé)');
+  if (e instanceof TypeError) return new Error('connexion refusée. Le serveur bloque peut-être les pages web : active le relais dans ⚙ Paramètres');
+  return e;
+}
+function http(url, json, timeout, direct) {
+  var ctl = new AbortController();
+  var t = setTimeout(function () { ctl.abort(); }, timeout || 25000);
+  return fetch(direct ? url : relayed(url), { signal: ctl.signal, cache: 'no-store' }).then(function (r) {
+    if (!r.ok) throw new Error('le serveur a répondu ' + r.status);
+    return json ? r.json() : r.text();
+  }).catch(function (e) { throw netErr(e); }).finally(function () { clearTimeout(t); });
+}
+function fetchText(url) {
+  if (/\.gz(\?|$)/i.test(url)) {
+    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('guide .gz non pris en charge (iOS 16.4 minimum)'));
+    return fetch(relayed(url)).then(function (r) {
+      if (!r.ok) throw new Error('le serveur a répondu ' + r.status);
+      return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();
+    }).catch(function (e) { throw netErr(e); });
+  }
+  return http(url, false, 90000);
+}
+
+// ============================================================ M3U
+var ATTR = /([\w-]+)="([^"]*)"/g;
+function attrs(line) { var o = {}, m; ATTR.lastIndex = 0; while ((m = ATTR.exec(line))) o[m[1]] = m[2]; return o; }
+function parseM3U(txt) {
+  var items = [], name = null, group = null, tid = '', logo = '', epg = '';
+  var lines = txt.split(/\r?\n/);
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    if (line.indexOf('#EXTM3U') === 0) {
+      var a0 = attrs(line);
+      epg = ((a0['url-tvg'] || a0['x-tvg-url'] || '').split(',')[0] || '').trim();
+    } else if (line.indexOf('#EXTINF') === 0) {
+      var a = attrs(line), rest = line.replace(ATTR, ''), c = rest.indexOf(',');
+      name = c >= 0 ? rest.slice(c + 1).trim() : '';
+      name = name || a['tvg-name'] || 'Sans nom';
+      if (a['group-title']) group = a['group-title'];
+      tid = (a['tvg-id'] || '').trim().toLowerCase();
+      logo = (a['tvg-logo'] || '').trim();
+    } else if (line.indexOf('#EXTGRP:') === 0) {
+      group = line.slice(8).trim();
+    } else if (line[0] === '#') {
+      continue;
+    } else {
+      var nm = name || line;
+      items.push({ name: nm, ln: nm.toLowerCase(), kind: 'play', url: line, key: tid || nm.toLowerCase(), sid: null, logo: logo || null, cat: group || 'Sans catégorie' });
+      name = null; group = null; tid = ''; logo = '';
+    }
+  }
+  return { items: items, epg: epg };
+}
+
+// ============================================================ guide TV XMLTV
+function xmlDecode(s) {
+  return String(s).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, function (_, n) { return String.fromCharCode(n); })
+    .replace(/&amp;/g, '&').trim();
+}
+function xmltvTs(s) {
+  var m = /^(\d{4})(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\s*([+-]\d{4})?/.exec(s || '');
+  if (!m) return 0;
+  if (m[7]) {
+    var t = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) / 1000;
+    var sg = m[7][0] === '-' ? -1 : 1;
+    return t - sg * (toInt(m[7].slice(1, 3)) * 3600 + toInt(m[7].slice(3, 5)) * 60);
+  }
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() / 1000;
+}
+function parseXmltv(txt, wantedIds, wantedNames) {
+  var keymap = {}, epg = {}, m, lo = now() - 3 * 3600, hi = now() + EPG_HOURS * 3600;
+  var reCh = /<channel\s+id="([^"]*)"[^>]*>([\s\S]*?)<\/channel>/g, reDn = /<display-name[^>]*>([\s\S]*?)<\/display-name>/g;
+  while ((m = reCh.exec(txt))) {
+    var cid = m[1].trim().toLowerCase(), keys = wantedIds[cid] ? [cid] : [], d;
+    reDn.lastIndex = 0;
+    while ((d = reDn.exec(m[2]))) { var n = xmlDecode(d[1]).toLowerCase(); if (wantedNames[n] && keys.indexOf(n) < 0) keys.push(n); }
+    if (keys.length) keymap[cid] = keys;
+  }
+  var reP = /<programme\s([^>]*)>([\s\S]*?)<\/programme>/g;
+  while ((m = reP.exec(txt))) {
+    var at = attrs(m[1]);
+    var ch = (at.channel || '').trim().toLowerCase();
+    var ks = keymap[ch] || (wantedIds[ch] ? [ch] : null);
+    if (!ks) continue;
+    var st = xmltvTs(at.start), en = xmltvTs(at.stop);
+    if (en < lo || st > hi) continue;
+    var t = /<title[^>]*>([\s\S]*?)<\/title>/.exec(m[2]), ds = /<desc[^>]*>([\s\S]*?)<\/desc>/.exec(m[2]);
+    var p = [st, en, t ? xmlDecode(t[1]) : '', ds ? xmlDecode(ds[1]).slice(0, EPG_DESC_MAX) : ''];
+    ks.forEach(function (k) { (epg[k] = epg[k] || []).push(p); });
+  }
+  Object.keys(epg).forEach(function (k) { epg[k].sort(function (x, y) { return x[0] - y[0]; }); });
+  return epg;
+}
+
+// ============================================================ tri FR, initiales, qualité
+var FR_RE = /^[\W_]*(FR(?![A-Za-z])|FRAN[CÇ]|FRENCH)/i;
+function frFirst(arr, key) {
+  var fr = [], other = [];
+  arr.forEach(function (x) { (FR_RE.test(key(x)) ? fr : other).push(x); });
+  return fr.concat(other);
+}
+var PREFIX_RE = /^[\W_]*(?:FR|UK|US|DE|ES|IT|BE|CH|CA|AR|PT|NL|VIP|4K|HD)[\W_]+/i;
+function initials(text) {
+  var w = (String(text || '').replace(PREFIX_RE, '').match(/[A-Za-z0-9À-ÿ]+/g)) || (String(text || '').match(/[A-Za-z0-9À-ÿ]+/g)) || [];
+  if (!w.length) return '•';
+  return (w[0][0] + (w.length > 1 ? w[1][0] : (w[0][1] || ''))).toUpperCase();
+}
+var TILE_COLORS = ['#2a2531', '#2d2440', '#262230', '#33284a', '#2a2838', '#2e2a3a'];
+function tileColor(t) { var s = 0; for (var i = 0; i < (t || '').length; i++) s += t.charCodeAt(i); return TILE_COLORS[s % TILE_COLORS.length]; }
+
+var W = '(?<![a-z0-9])', E = '(?![a-z0-9])';
+var QUAL = [[4, new RegExp(W + '(4k|uhd|2160p?)' + E + '|ᵁᴴᴰ|ᵘʰᵈ', 'i')], [3, new RegExp(W + '(fhd|1080[pi]?|full ?hd)' + E + '|ᶠᴴᴰ', 'i')],
+  [2, new RegExp(W + '(hd|720p?)' + E + '|ᴴᴰ', 'i')], [1, new RegExp(W + '(sd|lq|480p?|576[pi]?|low)' + E + '|ˢᴰ', 'i')]];
+var JUNK = new RegExp(W + '(4k|uhd|2160p?|fhd|1080[pi]?|full ?hd|hd|720p?|sd|lq|hq|480p?|576[pi]?|low|hevc|h\\.?26[45]|x26[45]|\\d{2,3} ?fps|backup|bkp|raw)' + E, 'gi');
+var SUPER = /[ʰ-˿ᴀ-ᶿ⁰-₟]+/g;
+function qualityOf(n) { for (var i = 0; i < QUAL.length; i++) if (QUAL[i][1].test(n || '')) return QUAL[i][0]; return 2; }
+function baseName(n) { return String(n || '').toLowerCase().replace(SUPER, ' ').replace(JUNK, ' ').replace(/[\W_]+/g, ' ').trim().replace(/\s+/g, ' '); }
+function siblings(ctx, name, url) {
+  var b = baseName(name), out = [];
+  (ctx || []).forEach(function (it) { if (it.kind === 'play' && it.url !== url && baseName(it.name) === b) out.push([qualityOf(it.name), it]); });
+  return out;
+}
+
+// ============================================================ état
+var S = {
+  source: null, pl: null, xt: null, m3u: [], epg: null, epgLoading: false,
+  mode: 'live', nav: [['live', 'TV']], cats: [], catView: [], current: [], rows: [],
+  listMode: 'cats', prevMode: 'cats', itemsTitle: 'CHAÎNES', catId: null, seriesBack: null,
+  pools: {}, poolLoading: {}, playing: null, playProgs: [], aq: null, sportCache: null
+};
+
+// ============================================================ Xtream
+function xtApi(params, timeout) {
+  var q = 'username=' + encodeURIComponent(S.xt.user) + '&password=' + encodeURIComponent(S.xt.pwd);
+  Object.keys(params || {}).forEach(function (k) { q += '&' + k + '=' + encodeURIComponent(params[k]); });
+  return http(S.xt.server + '/player_api.php?' + q, true, timeout || 30000);
+}
+function xtBase(kind) { return S.xt.server + '/' + kind + '/' + encodeURIComponent(S.xt.user) + '/' + encodeURIComponent(S.xt.pwd) + '/'; }
+function liveUrl(url) {
+  if (S.xt && url.indexOf(xtBase('live')) === 0) return url.replace(/\.(ts|m3u8)$/, '.' + cfg.fmt);
+  return url;
+}
+function xtItems(data, mode) {
+  var out = [];
+  (Array.isArray(data) ? data : []).forEach(function (d) {
+    var nm = d.name || '?';
+    if (mode === 'live') out.push({ name: nm, ln: nm.toLowerCase(), kind: 'play', url: xtBase('live') + d.stream_id + '.ts', sid: d.stream_id, key: null, logo: d.stream_icon || null, cat: String(d.category_id) });
+    else if (mode === 'vod') out.push({ name: nm, ln: nm.toLowerCase(), kind: 'play', url: xtBase('movie') + d.stream_id + '.' + (d.container_extension || 'mp4'), sid: null, key: null, logo: d.stream_icon || null, cat: String(d.category_id) });
+    else out.push({ name: nm, ln: nm.toLowerCase(), kind: 'series', url: '', series: d.series_id, logo: d.cover || null, cat: String(d.category_id) });
+  });
+  return out;
+}
+
+// ============================================================ playlists
+function setPlName(name) {
+  S.pl = S.pl || {};
+  S.pl.name = name || '';
+  $('plchip').textContent = S.pl.name;
+  $('plchip').hidden = !S.pl.name;
+  $('avatar').textContent = ((S.pl.name || 'B').match(/[A-Za-z0-9]/) || ['B'])[0].toUpperCase();
+  cfg.last = S.pl; saveCfg();
+}
+function savedName(p) { var f = cfg.playlists.filter(function (x) { return sameSource(x, p); })[0]; return f ? f.name : ''; }
+function upsertPlaylist(name) {
+  var p = Object.assign({}, S.pl, { name: name });
+  cfg.playlists = cfg.playlists.filter(function (x) { return !sameSource(x, p) && x.name !== name; });
+  cfg.playlists.push(p);
+  setPlName(name);
+}
+function suggestedName() {
+  var p = S.pl;
+  if (!p) return '';
+  if (p.name) return p.name;
+  if (p.type === 'xtream') { try { return new URL(p.server).hostname; } catch (e) { return 'Xtream'; } }
+  var s = (p.src || '').replace(/^file:/, '');
+  return s.split('/').pop().split('?')[0].replace(/\.[^.]+$/, '') || 'Ma liste';
+}
+
+function openPlaylist(p, save) {
+  S.epg = null; S.pools = {}; S.poolLoading = {}; S.sportCache = null;
+  if (p.type === 'xtream') return xtreamLogin(p, save);
+  loadM3U(p, save);
+}
+
+function xtreamLogin(p, save) {
+  var server = String(p.server || '').trim().replace(/\/(player_api|get|xmltv)\.php.*$/i, '').replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(server)) server = 'https://' + server;
+  S.xt = { server: server, user: String(p.user || '').trim(), pwd: p.pwd || '' };
+  setStatus('Connexion au serveur Xtream…', true);
+  renderEmpty('Connexion…');
+  xtApi({}).then(function (info) {
+    var ui = (info && info.user_info) || {};
+    if (String(ui.auth) !== '1') throw new Error('identifiants refusés par le serveur');
+    S.source = 'xtream'; S.m3u = [];
+    S.pl = { type: 'xtream', server: server, user: S.xt.user, pwd: S.xt.pwd };
+    var name = p.name || savedName(S.pl);
+    if (save && name) upsertPlaylist(name); else setPlName(name);
+    var exp = toInt(ui.exp_date);
+    S.connInfo = 'Connecté' + (exp ? ' · expire le ' + new Date(exp * 1000).toLocaleDateString('fr-FR') : '');
+    S.nav = [['live', 'TV'], ['vod', 'Films'], ['series', 'Séries']];
+    setMode('live');
+  }).catch(function (e) {
+    setStatus('Erreur : ' + e.message);
+    renderEmpty('Connexion impossible : ' + esc(e.message));
+  });
+}
+
+function loadM3U(p, save) {
+  setStatus('Chargement de la liste M3U…', true);
+  renderEmpty('Chargement…');
+  var src = p.src || '';
+  var get = src.indexOf('file:') === 0
+    ? idb.get(src).then(function (t) { if (t == null) throw new Error('fichier introuvable, réimporte-le'); return t; })
+    : http(src, false, 90000);
+  get.then(function (txt) {
+    var r = parseM3U(txt);
+    S.source = 'm3u'; S.xt = null; S.m3u = r.items;
+    S.pl = { type: 'm3u', src: src, epg: p.epg || '' };
+    var name = p.name || savedName(S.pl);
+    if (save && name) upsertPlaylist(name); else setPlName(name);
+    var groups = [], seen = {};
+    r.items.forEach(function (x) { if (!seen[x.cat]) { seen[x.cat] = 1; groups.push(x.cat); } });
+    groups = frFirst(groups, function (g) { return g; });
+    S.cats = [{ id: '__fav', name: '★  Favoris' }, { id: '__all', name: 'Toutes les chaînes  ·  ' + r.items.length }]
+      .concat(groups.map(function (g) { return { id: g, name: g }; }));
+    S.nav = [['live', 'TV']]; S.mode = 'live'; renderNav();
+    S.current = [];
+    showList('cats');
+    setStatus(r.items.length + ' chaînes chargées · ' + groups.length + ' catégories');
+    loadM3uEpg(p.epg || r.epg);
+  }).catch(function (e) {
+    setStatus('Erreur : ' + e.message);
+    renderEmpty('Liste M3U illisible : ' + esc(e.message));
+  });
+}
+
+function loadM3uEpg(url) {
+  if (!url || !/^https?:/i.test(url)) return;
+  var ids = {}, names = {};
+  S.m3u.forEach(function (x) { if (x.key) ids[x.key] = 1; names[x.ln] = 1; });
+  S.epgLoading = true;
+  fetchText(url).then(function (txt) {
+    S.epg = parseXmltv(txt, ids, names); S.epgLoading = false;
+    setStatus('Guide TV chargé · ' + Object.keys(S.epg).length + ' chaînes avec programmes');
+    if (S.playing) progsFor(S.playing).then(function (p) { S.playProgs = p; renderInfo(); });
+  }).catch(function (e) { S.epgLoading = false; setStatus('Guide TV indisponible : ' + e.message); });
+}
+
+// ============================================================ catégories et listes
+function setMode(m) {
+  S.mode = m;
+  renderNav();
+  if (S.source !== 'xtream') return;
+  var action = { live: 'get_live_categories', vod: 'get_vod_categories', series: 'get_series_categories' }[m];
+  setStatus('Chargement des catégories…', true);
+  renderEmpty('Chargement…');
+  xtApi({ action: action }).then(function (cats) {
+    if (S.mode !== m) return;
+    var lst = (Array.isArray(cats) ? cats : []).map(function (c) { return { id: String(c.category_id), name: c.category_name || '?' }; });
+    S.cats = [{ id: '__fav', name: '★  Favoris' }].concat(frFirst(lst, function (c) { return c.name; }));
+    S.current = [];
+    showList('cats');
+    setStatus((S.connInfo || 'Connecté') + ' · ' + lst.length + ' catégories');
+  }).catch(function (e) { setStatus('Erreur : ' + e.message); renderEmpty('Erreur : ' + esc(e.message)); });
+}
+
+function favItems() {
+  return cfg.favs.map(function (f) { return { name: f.name, ln: f.name.toLowerCase(), kind: 'play', url: f.url, sid: f.sid || null, key: f.key || null, logo: f.logo || null }; });
+}
+
+function openCat(c) {
+  S.catId = c.id; S.seriesBack = null;
+  S.itemsTitle = c.name.toUpperCase().slice(0, 40);
+  showList('items');
+  if (c.id === '__fav') return setCurrent(favItems());
+  if (S.source === 'm3u') return setCurrent(c.id === '__all' ? S.m3u : S.m3u.filter(function (x) { return x.cat === c.id; }));
+  if (S.source === 'xtream') {
+    S.current = []; renderEmpty('Chargement…'); $('lcount').textContent = '';
+    var m = S.mode, action = { live: 'get_live_streams', vod: 'get_vod_streams', series: 'get_series' }[m];
+    setStatus('Chargement…', true);
+    xtApi({ action: action, category_id: c.id }, 45000).then(function (data) {
+      if (S.mode !== m || S.catId !== c.id) return;
+      var items = xtItems(data, m);
+      setCurrent(items);
+      setStatus(items.length + ' éléments');
+    }).catch(function (e) { setStatus('Erreur : ' + e.message); renderEmpty('Erreur : ' + esc(e.message)); });
+  }
+}
+
+function openSeries(it) {
+  setStatus('Chargement des épisodes…', true);
+  xtApi({ action: 'get_series_info', series_id: it.series }, 45000).then(function (info) {
+    var eps = info && info.episodes, seasons = [];
+    if (Array.isArray(eps)) seasons = eps.map(function (l, i) { return [i + 1, l]; });
+    else if (eps && typeof eps === 'object') seasons = Object.keys(eps).map(function (k) { return [toInt(k), eps[k]]; }).sort(function (a, b) { return a[0] - b[0]; });
+    var out = [{ name: '←  Retour', ln: '', kind: 'back' }];
+    seasons.forEach(function (s) {
+      (s[1] || []).forEach(function (e) {
+        var n = toInt(e.episode_num);
+        var nm = 'S' + ('0' + s[0]).slice(-2) + 'E' + ('0' + n).slice(-2) + ' · ' + (e.title || 'Épisode ' + n);
+        out.push({ name: nm, ln: nm.toLowerCase(), kind: 'play', url: xtBase('series') + e.id + '.' + (e.container_extension || 'mp4'), logo: it.logo });
+      });
+    });
+    S.seriesBack = S.current;
+    clearSearch();
+    setCurrent(out);
+    setStatus(it.name + ' · ' + (out.length - 1) + ' épisodes');
+  }).catch(function (e) { setStatus('Erreur : ' + e.message); });
+}
+
+function setCurrent(items) { S.current = items; applyFilter(); }
+
+function query() { return $('search').value.toLowerCase().trim(); }
+function clearSearch() { $('search').value = ''; $('clr').hidden = true; }
+
+function applyFilter() {
+  var q = query();
+  if (q && S.listMode !== 'search') { S.prevMode = S.listMode; S.listMode = 'search'; }
+  else if (!q && S.listMode === 'search') S.listMode = S.prevMode;
+  renderListHead();
+  if (S.listMode === 'search') return renderSearch(q);
+  if (S.listMode === 'cats') {
+    S.catView = S.cats.filter(function (c) { return !q || c.name.toLowerCase().indexOf(q) >= 0; });
+    var n = S.catView.filter(function (c) { return c.id.indexOf('__') !== 0; }).length;
+    $('lcount').textContent = n ? String(n) : '';
+    return renderRows(S.catView.map(function (c) { return { name: c.name, kind: 'category', cat: c.id }; }),
+      'cat', S.cats.length ? 'Aucune catégorie.' : 'Ajoute une playlist avec le bouton + en haut.');
+  }
+  S.rows = S.current;
+  $('lcount').textContent = S.rows.length ? String(S.rows.length) : '';
+  renderRows(S.rows, 'it', S.cats.length ? 'Aucune chaîne.' : '');
+}
+
+function searchPool() {
+  if (S.source === 'm3u') return S.m3u;
+  if (S.source !== 'xtream') return [];
+  var key = S.mode;
+  if (S.pools[key]) return S.pools[key];
+  if (!S.poolLoading[key]) {
+    S.poolLoading[key] = true;
+    var action = { live: 'get_live_streams', vod: 'get_vod_streams', series: 'get_series' }[key];
+    xtApi({ action: action }, 120000).then(function (data) {
+      S.pools[key] = xtItems(data, key);
+    }).catch(function () { S.pools[key] = []; }).finally(function () {
+      S.poolLoading[key] = false;
+      if (S.listMode === 'search') applyFilter();
+    });
+  }
+  return null;
+}
+
+function renderSearch(q) {
+  var rank = {}, names = {};
+  S.cats.forEach(function (c, i) { rank[c.id] = i; names[c.id] = c.name; });
+  var catRows = S.cats.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; })
+    .map(function (c) { return { name: c.name, kind: 'category', cat: c.id, sub: 'Catégorie' }; });
+  var pool = searchPool();
+  var res = (pool || []).filter(function (it) { return it.ln.indexOf(q) >= 0; });
+  var total = res.length;
+  res = res.map(function (it, i) { return [rank[it.cat] == null ? 1e6 : rank[it.cat], i, it]; })
+    .sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).slice(0, 400)
+    .map(function (x) { return Object.assign({}, x[2], { sub: names[x[2].cat] || '' }); });
+  S.rows = catRows.concat(res);
+  $('lcount').textContent = (pool == null && !S.rows.length) ? 'Chargement…'
+    : catRows.length + ' cat. · ' + total + ' chaînes' + (total > 400 ? ' (400 affichées)' : '');
+  renderRows(S.rows, 'it', pool == null ? 'Recherche dans toutes les chaînes…' : 'Aucun résultat.');
+}
+
+function showList(mode) {
+  S.listMode = mode;
+  clearSearch();
+  applyFilter();
+  $('list').scrollTop = 0;
+}
+
+function back() {
+  if (S.listMode === 'search') { clearSearch(); applyFilter(); return; }
+  if (S.listMode === 'items') {
+    if (S.seriesBack) { var sb = S.seriesBack; S.seriesBack = null; setCurrent(sb); return; }
+    showList('cats');
+  }
+}
+
+function renderListHead() {
+  $('back').hidden = S.listMode === 'cats';
+  $('ltitle').textContent = S.listMode === 'cats' ? 'CATÉGORIES' : S.listMode === 'search' ? 'RÉSULTATS' : S.itemsTitle;
+}
+
+function renderNav() {
+  var nav = $('nav');
+  nav.hidden = S.nav.length < 2;
+  nav.innerHTML = S.nav.map(function (o) { return '<button data-k="' + o[0] + '" class="' + (o[0] === S.mode ? 'on' : '') + '">' + esc(o[1]) + '</button>'; }).join('');
+}
+
+// ============================================================ liste virtualisée (seules les lignes visibles existent)
+var V = { items: [], kind: 'it', rh: 56, empty: '' };
+function renderEmpty(t) { V.items = []; V.empty = t; drawList(true); }
+function renderRows(items, kind, empty) {
+  V.items = items; V.kind = kind; V.rh = kind === 'cat' ? 48 : 58; V.empty = empty;
+  drawList(true);
+}
+var lastDraw = '';
+function drawList(force) {
+  var list = $('list'), sizer = $('sizer');
+  if (!V.items.length) {
+    sizer.style.height = 'auto';
+    sizer.innerHTML = V.empty ? '<div class="empty">' + V.empty + '</div>' : '';
+    lastDraw = '';
+    return;
+  }
+  var H = list.clientHeight || 400, top = list.scrollTop, rh = V.rh;
+  var first = Math.max(0, Math.floor(top / rh) - 6), last = Math.min(V.items.length, Math.ceil((top + H) / rh) + 6);
+  var sig = first + ':' + last + ':' + V.items.length + ':' + V.kind;
+  if (!force && sig === lastDraw) return;
+  lastDraw = sig;
+  sizer.style.height = (V.items.length * rh) + 'px';
+  var html = '';
+  for (var i = first; i < last; i++) html += rowHtml(V.items[i], i, rh);
+  sizer.innerHTML = html;
+}
+function tileHtml(name, logo, cls) {
+  var c = tileColor(name);
+  var img = (logo && cfg.logos) ? '<img loading="lazy" src="' + esc(logo) + '" alt="" onerror="this.remove()">' : '';
+  return '<span class="tile ' + (cls || '') + '" style="background:' + c + '">' + esc(initials(name)) + img + '</span>';
+}
+function rowHtml(it, i, rh) {
+  var y = i * rh;
+  if (it.kind === 'category' && V.kind === 'cat') {
+    return '<div class="row cat" data-i="' + i + '" style="top:' + y + 'px"><span class="tx"><div class="nm">' + esc(it.name) + '</div></span><span class="chev">›</span></div>';
+  }
+  var playing = isPlaying(it), fav = it.kind === 'play' && isFav(it);
+  var lead = S.listMode === 'items' && it.kind !== 'back' ? '<span class="n">' + (i + (S.current[0] && S.current[0].kind === 'back' ? 0 : 1)) + '</span>' : '';
+  var tile = it.kind === 'category' ? '<span class="tile icon">☰</span>'
+    : it.kind === 'back' ? '<span class="tile icon">←</span>'
+    : (cfg.logos ? tileHtml(it.name, it.logo) : '');
+  return '<div class="row it' + (playing ? ' sel' : '') + '" data-i="' + i + '" style="top:' + y + 'px">' + lead + tile +
+    '<span class="tx"><div class="nm">' + esc(it.name) + '</div>' + (it.sub ? '<div class="sb">' + esc(it.sub) + '</div>' : '') + '</span>' +
+    (fav ? '<span class="fav">★</span>' : '') + (playing ? '<span class="dot"></span>' : '') + '</div>';
+}
+
+// toucher / appui long sur une ligne
+(function () {
+  var list = $('list'), timer = null, startY = 0, startX = 0, longFired = false, target = null;
+  list.addEventListener('scroll', function () { drawList(false); clearTimeout(timer); }, { passive: true });
+  list.addEventListener('touchstart', function (e) {
+    target = e.target.closest('.row'); longFired = false;
+    if (!target) return;
+    startY = e.touches[0].clientY; startX = e.touches[0].clientX;
+    var i = +target.dataset.i;
+    timer = setTimeout(function () { longFired = true; rowMenu(V.items[i]); }, 520);
+  }, { passive: true });
+  list.addEventListener('touchmove', function (e) {
+    if (Math.abs(e.touches[0].clientY - startY) > 8 || Math.abs(e.touches[0].clientX - startX) > 8) clearTimeout(timer);
+  }, { passive: true });
+  list.addEventListener('touchend', function () { clearTimeout(timer); }, { passive: true });
+  list.addEventListener('contextmenu', function (e) {
+    var r = e.target.closest('.row'); if (!r) return;
+    e.preventDefault(); if (!longFired) rowMenu(V.items[+r.dataset.i]);
+  });
+  list.addEventListener('click', function (e) {
+    var r = e.target.closest('.row');
+    if (!r || longFired) { longFired = false; return; }
+    tap(V.items[+r.dataset.i]);
+  });
+})();
+
+function tap(it) {
+  if (!it) return;
+  if (it.kind === 'category') { var c = S.cats.filter(function (x) { return x.id === it.cat; })[0]; if (c) openCat(c); }
+  else if (it.kind === 'play') play(it, S.rows);
+  else if (it.kind === 'series') openSeries(it);
+  else if (it.kind === 'back' && S.seriesBack) { var sb = S.seriesBack; S.seriesBack = null; setCurrent(sb); }
+}
+
+// ============================================================ guide TV
+function progsFor(it) {
+  if (S.source === 'xtream' && it.sid) {
+    return xtApi({ action: 'get_short_epg', stream_id: it.sid, limit: 10 }).then(function (d) {
+      return ((d && d.epg_listings) || []).map(function (p) {
+        return [toInt(p.start_timestamp), toInt(p.stop_timestamp), b64(p.title), b64(p.description).slice(0, EPG_DESC_MAX)];
+      }).filter(function (p) { return p[0] && p[1]; }).sort(function (a, b) { return a[0] - b[0]; });
+    }).catch(function () { return []; });
+  }
+  if (S.epg) return Promise.resolve(S.epg[(it.key || '').toLowerCase()] || S.epg[it.ln] || []);
+  return Promise.resolve([]);
+}
+function epgMessage(it) {
+  if (!it || it.kind !== 'play' || (!it.sid && !it.key)) return 'Pas de guide TV pour ce contenu.';
+  if (S.source === 'm3u') {
+    if (S.epgLoading) return 'Guide TV en cours de chargement…';
+    if (!S.epg) return 'Cette liste ne fournit pas de guide TV.';
+  }
+  return 'Aucun programme annoncé pour cette chaîne.';
+}
+function infoHtml(it, progs) {
+  var t = now();
+  var cur = progs.filter(function (p) { return p[0] <= t && t < p[1]; })[0];
+  var nxt = progs.filter(function (p) { return p[0] >= t && p !== cur; })[0];
+  var h = '<div class="irow"><span class="tag">EN DIRECT</span><span class="cname">' + esc(it.name) + '</span></div>';
+  h += '<div class="ptitle' + (cur ? '' : ' dim') + '">' + esc(cur ? (cur[2] || 'Programme en cours') : (progs.length ? 'Aucun programme en ce moment' : epgMessage(it))) + '</div>';
+  if (cur) {
+    var f = Math.min(1, Math.max(0, (t - cur[0]) / Math.max(1, cur[1] - cur[0])));
+    h += '<div class="prog"><span>' + hm(cur[0]) + '</span><span class="bar"><i style="width:' + (f * 100).toFixed(1) + '%"></i></span><span>' + hm(cur[1]) + '</span></div>';
+  }
+  if (nxt) h += '<div class="next">Ensuite · ' + hm(nxt[0]) + '  ' + esc(nxt[2]) + '</div>';
+  return h;
+}
+function renderInfo() {
+  if (!S.playing) return;
+  var h = infoHtml(S.playing, S.playProgs);
+  $('info').innerHTML = h;
+  $('ovInfo').innerHTML = '<div class="info" style="padding:0">' + h + '</div>';
+}
+setInterval(renderInfo, 30000);
+
+// ============================================================ lecture
+var video = $('video');
+var vstate = 'idle';
+function setVState(s) {
+  vstate = s;
+  var el = $('vstate');
+  el.innerHTML = s === 'buffering' ? '<span class="spin"></span>'
+    : s === 'error' ? 'Lecture impossible : flux indisponible ou format non pris en charge par l\'iPhone' +
+      (S.xt && cfg.fmt === 'ts' ? '<br>Passe le format du direct sur HLS dans ⚙ Paramètres.' : '')
+    : '';
+  var ic = (s === 'playing' || s === 'buffering') ? ICON.pause : ICON.play;
+  $('bPlay').innerHTML = ic; $('ovPlay').innerHTML = ic;
+}
+function isPlaying(it) { return it && it.kind === 'play' && S.playing && S.playing.url === it.url; }
+function isFav(it) { return !!it && cfg.favs.some(function (f) { return f.url === it.url; }); }
+
+function play(it, ctx, auto) {
+  S.playing = it;
+  if (auto && S.aq) { S.aq.name = it.name; S.aq.url = it.url; S.aq.level = qualityOf(it.name); }
+  else S.aq = { ctx: (ctx || []).filter(function (x) { return x.kind === 'play'; }), name: it.name, url: it.url, level: qualityOf(it.name), origin: qualityOf(it.name), lastChange: 0, reduced: false, token: (S.aq ? S.aq.token : 0) + 1 };
+  S.aq.loaded = Date.now(); S.aq.stall = null;
+  document.body.classList.add('playing');
+  $('ph').hidden = true; $('vcard').hidden = false; $('ctrl').hidden = false;
+  setVState('buffering');
+  video.src = liveUrl(it.url);
+  var pr = video.play();
+  if (pr && pr.catch) pr.catch(function () { setVState('paused'); });
+  S.playProgs = [];
+  renderInfo(); updateFav(); drawList(true);
+  setStatus('Lecture : ' + it.name);
+  progsFor(it).then(function (p) { if (S.playing === it) { S.playProgs = p; renderInfo(); } });
+  if (!auto) Foot.onChannelChange();
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(function () {}); } catch (e) {}
+}
+function stop() {
+  video.pause(); video.removeAttribute('src'); video.load();
+  S.playing = null; S.playProgs = []; setVState('idle');
+  document.body.classList.remove('playing', 'side');
+  $('ph').hidden = false; $('vcard').hidden = true; $('ctrl').hidden = true;
+  drawList(true);
+}
+function togglePlay() {
+  if (!S.playing) return;
+  if (video.paused) { var p = video.play(); if (p && p.catch) p.catch(function () {}); } else video.pause();
+}
+function toggleFav(target) {
+  var it = target || S.playing;
+  if (!it || it.kind !== 'play') return;
+  if (isFav(it)) cfg.favs = cfg.favs.filter(function (f) { return f.url !== it.url; });
+  else cfg.favs.push({ name: it.name, url: it.url, sid: it.sid || null, key: it.key || null, logo: it.logo || null });
+  saveCfg(); updateFav();
+  if (S.catId === '__fav' && S.listMode === 'items') setCurrent(favItems()); else drawList(true);
+}
+function updateFav() {
+  var on = isFav(S.playing);
+  [$('bFav'), $('ovFav')].forEach(function (b) { b.innerHTML = on ? ICON.starOn : ICON.star; b.classList.toggle('on', on); });
+}
+function fullscreen() {
+  if (video.webkitEnterFullscreen) { try { video.webkitEnterFullscreen(); return; } catch (e) {} }
+  var el = $('vbox');
+  (el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el);
+}
+
+video.addEventListener('playing', function () { setVState('playing'); aqOnState('playing'); });
+video.addEventListener('pause', function () { if (S.playing && vstate !== 'error') setVState('paused'); });
+video.addEventListener('waiting', function () { setVState('buffering'); aqOnState('buffering'); });
+video.addEventListener('stalled', function () { aqOnState('buffering'); });
+video.addEventListener('error', function () { if (S.playing) { setVState('error'); aqOnState('error'); } });
+video.addEventListener('ended', function () { setVState('paused'); });
+video.addEventListener('timeupdate', function () {
+  var d = video.duration, ok = isFinite(d) && d > 0;
+  $('ovSeek').hidden = !ok; $('ovBack').hidden = !ok; $('ovFwd').hidden = !ok;
+  if (ok) {
+    $('seek').value = Math.round(video.currentTime / d * 1000);
+    $('tCur').textContent = fmtT(video.currentTime); $('tLen').textContent = fmtT(d);
+  }
+});
+function fmtT(s) { s = Math.floor(s); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + x).slice(-2); }
+
+// ============================================================ qualité automatique
+function aqOnState(st) {
+  var a = S.aq;
+  if (!cfg.autoq || !a || !S.playing) return;
+  if (Date.now() - a.loaded < 8000) return;                 // mise en mémoire tampon normale au démarrage
+  if (st === 'buffering' || st === 'error') {
+    if (!a.stall) {
+      a.stall = Date.now();
+      var tok = a.token, url = a.url;
+      setTimeout(function () {
+        if (S.aq === a && a.token === tok && a.url === url && a.stall && Date.now() - a.stall >= 6000) aqDowngrade(st === 'error' ? 'flux coupé' : 'longue coupure');
+      }, 6500);
+    }
+  } else if (st === 'playing') a.stall = null;
+}
+function aqDowngrade(why) {
+  var a = S.aq;
+  if (!a || Date.now() - a.lastChange < 15000) return;
+  var lower = siblings(a.ctx, a.name, a.url).filter(function (x) { return x[0] < a.level; });
+  if (!lower.length) { setStatus('Connexion instable : cette chaîne n\'existe pas en qualité inférieure'); return; }
+  lower.sort(function (x, y) { return y[0] - x[0]; });
+  var old = a.name;
+  a.reduced = true; a.lastChange = Date.now();
+  play(lower[0][1], null, true);
+  toast('Qualité réduite : ' + old + ' → ' + lower[0][1].name + ' (' + why + ')');
+}
+setInterval(function () {
+  var a = S.aq;
+  if (!cfg.autoq || !a || !S.playing || !a.reduced || a.stall) return;
+  if (Date.now() - a.lastChange < 600000) return;
+  var higher = siblings(a.ctx, a.name, a.url).filter(function (x) { return x[0] > a.level && x[0] <= a.origin; });
+  if (!higher.length) { a.reduced = false; return; }
+  higher.sort(function (x, y) { return x[0] - y[0]; });
+  a.lastChange = Date.now();
+  play(higher[0][1], null, true);
+  if (a.level >= a.origin) a.reduced = false;
+  toast('Connexion stable : retour en ' + higher[0][1].name);
+}, 20000);
+
+// ============================================================ plein écran paysage : barre d'infos au toucher
+var ovTimer = null;
+function ovShow() { $('ov').classList.remove('off'); clearTimeout(ovTimer); ovTimer = setTimeout(function () { if (!document.body.classList.contains('side')) $('ov').classList.add('off'); }, 6000); }
+$('ov').addEventListener('click', function (e) {
+  if (e.target === $('ov')) { if ($('ov').classList.contains('off')) ovShow(); else $('ov').classList.add('off'); }
+  else ovShow();
+});
+$('ovSide').onclick = function () { document.body.classList.toggle('side'); ovShow(); };
+$('ovClose').onclick = function () { document.body.classList.remove('side'); toast('Tourne le téléphone en portrait pour revenir aux listes'); };
+$('ovPlay').onclick = togglePlay;
+$('ovFav').onclick = function () { toggleFav(); };
+$('ovMatch').onclick = function () { openMatch(); };
+$('ovBack').onclick = function () { video.currentTime = Math.max(0, video.currentTime - 10); };
+$('ovFwd').onclick = function () { video.currentTime = Math.min(video.duration || 0, video.currentTime + 30); };
+$('seek').oninput = function () { if (isFinite(video.duration)) video.currentTime = this.value / 1000 * video.duration; ovShow(); };
+window.addEventListener('orientationchange', function () { setTimeout(function () { drawList(true); if (S.playing) ovShow(); }, 300); });
+window.addEventListener('resize', function () { drawList(true); });
+
+// ============================================================ fenêtres
+function sheet(html, onMount) {
+  closeSheet();
+  var scrim = document.createElement('div');
+  scrim.className = 'scrim';
+  scrim.innerHTML = '<div class="sheet" role="dialog"><div class="grab"></div>' + html + '</div>';
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeSheet(); });
+  $('sheets').appendChild(scrim);
+  scrim.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = closeSheet; });
+  if (onMount) onMount(scrim.querySelector('.sheet'));
+  return scrim;
+}
+function closeSheet() {
+  var s = $('sheets');
+  if (s.firstChild && s.firstChild._onclose) s.firstChild._onclose();
+  s.innerHTML = '';
+}
+function head(t) { return '<div class="sh"><h2>' + esc(t) + '</h2><button class="ib" data-close aria-label="Fermer">' + ICON.close + '</button></div>'; }
+function fieldHtml(id, label, val, type) {
+  return '<div class="cap">' + esc(label) + '</div><label class="field"><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(val || '') +
+    '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></label>';
+}
+
+function openAdd() {
+  sheet(head('Ajouter une playlist') + '<div class="sb2"><p class="hint">Choisis le type de source.</p>' +
+    '<button class="opt" id="oX"><span class="ic">⌁</span><span><b>Xtream Codes</b><small>Serveur, identifiant et mot de passe</small></span></button>' +
+    '<button class="opt" id="oU"><span class="ic">🔗</span><span><b>Lien M3U</b><small>Adresse d\'une liste en ligne</small></span></button>' +
+    '<button class="opt" id="oF"><span class="ic">📄</span><span><b>Fichier M3U</b><small>Liste enregistrée sur ton iPhone (Fichiers)</small></span></button>' +
+    '<input type="file" id="fM3U" accept=".m3u,.m3u8,audio/x-mpegurl,application/vnd.apple.mpegurl,text/plain,*/*" hidden></div>', function (sh) {
+    sh.querySelector('#oX').onclick = openXtream;
+    sh.querySelector('#oU').onclick = openM3uUrl;
+    var f = sh.querySelector('#fM3U');
+    sh.querySelector('#oF').onclick = function () { f.click(); };
+    f.onchange = function () {
+      var file = f.files && f.files[0];
+      if (!file) return;
+      file.text().then(function (txt) {
+        var key = 'file:' + file.name;
+        return idb.put(key, txt).then(function () {
+          closeSheet();
+          openPlaylist({ type: 'm3u', src: key, name: file.name.replace(/\.[^.]+$/, '') }, true);
+        });
+      }).catch(function (e) { toast('Impossible de lire ce fichier : ' + e.message); });
+    };
+  });
+}
+
+function openXtream() {
+  var x = S.pl && S.pl.type === 'xtream' ? S.pl : {};
+  sheet(head('Connexion Xtream') + '<div class="sb2">' +
+    fieldHtml('fS', 'Serveur (ex : https://exemple.com:8080)', x.server, 'url') + fieldHtml('fU', 'Utilisateur', x.user) +
+    fieldHtml('fP', 'Mot de passe', x.pwd, 'password') + fieldHtml('fN', 'Nom pour l\'enregistrer (optionnel)', '') +
+    '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Se connecter</button></div></div>', function (sh) {
+    sh.querySelector('#ok').onclick = function () {
+      var s = $('fS').value.trim(), u = $('fU').value.trim(), p = $('fP').value;
+      if (!s || !u || !p) return toast('Remplis le serveur, l\'utilisateur et le mot de passe');
+      var n = $('fN').value.trim();
+      closeSheet();
+      openPlaylist({ type: 'xtream', server: s, user: u, pwd: p, name: n }, true);
+    };
+  });
+}
+
+function openM3uUrl() {
+  var l = S.pl && S.pl.type === 'm3u' && /:\/\//.test(S.pl.src || '') ? S.pl : {};
+  sheet(head('Liste M3U en ligne') + '<div class="sb2">' +
+    fieldHtml('fL', 'Adresse de la liste', l.src, 'url') + fieldHtml('fE', 'Guide TV XMLTV (optionnel)', l.epg, 'url') +
+    fieldHtml('fN', 'Nom pour l\'enregistrer (optionnel)', '') +
+    '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Charger</button></div></div>', function (sh) {
+    sh.querySelector('#ok').onclick = function () {
+      var u = $('fL').value.trim();
+      if (!u) return toast('Indique l\'adresse de la liste');
+      var e = $('fE').value.trim(), n = $('fN').value.trim();
+      closeSheet();
+      openPlaylist({ type: 'm3u', src: u, epg: e, name: n }, true);
+    };
+  });
+}
+
+function openPlaylists() {
+  var rows = cfg.playlists.map(function (p, i) {
+    var cur = sameSource(p, S.pl);
+    var kind = p.type === 'xtream' ? 'Xtream Codes' : (/^file:/.test(p.src || '') ? 'Fichier M3U' : 'Lien M3U');
+    return '<div class="plrow' + (cur ? ' cur' : '') + '"><button class="plopen" data-i="' + i + '" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left">' +
+      tileHtml(p.name, null, 'sq') + '<span class="tx"><b>' + esc(p.name) + '</b><small>' + kind + '</small></span></button>' +
+      '<button class="mini" data-ren="' + i + '">Renommer</button><button class="mini del" data-del="' + i + '">Supprimer</button></div>';
+  }).join('');
+  sheet(head('Mes playlists') + '<p class="hint">Touche une playlist pour l\'ouvrir.</p><div class="sb2"><div class="box">' +
+    (rows || '<div class="empty">Aucune playlist enregistrée pour l\'instant.</div>') + '</div>' +
+    '<div class="btns" style="justify-content:flex-start"><button class="pill p" id="saveCur">＋  Enregistrer la playlist actuelle</button></div></div>', function (sh) {
+    sh.querySelectorAll('[data-i]').forEach(function (b) { b.onclick = function () { var p = cfg.playlists[+b.dataset.i]; closeSheet(); openPlaylist(p); }; });
+    sh.querySelectorAll('[data-ren]').forEach(function (b) { b.onclick = function () { renamePlaylist(+b.dataset.ren); }; });
+    sh.querySelectorAll('[data-del]').forEach(function (b) {
+      b.onclick = function () {
+        if (b.dataset.armed) {
+          var p = cfg.playlists.splice(+b.dataset.del, 1)[0];
+          if (p && /^file:/.test(p.src || '') && !cfg.playlists.some(function (x) { return x.src === p.src; })) idb.del(p.src);
+          saveCfg(); openPlaylists();
+        } else { b.dataset.armed = '1'; b.textContent = 'Confirmer ?'; }
+      };
+    });
+    sh.querySelector('#saveCur').onclick = function () {
+      if (!S.pl || !S.source) { toast('Charge d\'abord une playlist (M3U ou Xtream)'); return; }
+      sheet(head('Enregistrer la playlist') + fieldHtml('fN', 'Nom de la playlist', suggestedName()) +
+        '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Enregistrer</button></div>', function (s2) {
+        s2.querySelector('#ok').onclick = function () {
+          var n = $('fN').value.trim(); if (!n) return;
+          upsertPlaylist(n); saveCfg(); closeSheet(); toast('Playlist « ' + n + ' » enregistrée');
+        };
+      });
+    };
+  });
+}
+function renamePlaylist(i) {
+  var p = cfg.playlists[i]; if (!p) return;
+  sheet(head('Renommer') + fieldHtml('fN', 'Nouveau nom', p.name) +
+    '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Renommer</button></div>', function (sh) {
+    sh.querySelector('#ok').onclick = function () {
+      var n = $('fN').value.trim(); if (!n) return;
+      p.name = n; if (sameSource(p, S.pl)) setPlName(n);
+      saveCfg(); openPlaylists();
+    };
+  });
+}
+
+function openSettings() {
+  var st = { fmt: cfg.fmt, autoq: cfg.autoq, logos: cfg.logos };
+  function radio(k, v, t) { return '<button class="radio' + (st[k] === v ? ' on' : '') + '" data-k="' + k + '" data-v="' + v + '"><i></i>' + t + '</button>'; }
+  function sw(k, t) { return '<button class="sw' + (st[k] ? ' on' : '') + '" data-sw="' + k + '"><span>' + t + '</span><i></i></button>'; }
+  sheet(head('Paramètres de lecture') + '<div class="sb2">' +
+    '<div class="cap">Format du direct (Xtream)</div>' +
+    radio('fmt', 'm3u8', 'HLS (.m3u8) — celui que l\'iPhone lit (recommandé)') + radio('fmt', 'ts', 'MPEG-TS (.ts) — ne marche que sur ordinateur') +
+    '<div class="cap">Qualité automatique</div>' + sw('autoq', 'Baisser la qualité si la connexion ralentit') +
+    '<div class="cap">Affichage</div>' + sw('logos', 'Afficher les logos des chaînes') +
+    '<div class="cap">Relais (seulement si la connexion est refusée)</div>' +
+    '<p class="hint">Certains serveurs refusent les pages web. Colle ici l\'adresse de ton relais, par exemple https://brutus.ton-nom.workers.dev/?url=. Laisse vide sinon.</p>' +
+    '<label class="field"><input id="fR" type="url" value="' + esc(cfg.relay) + '" placeholder="https://…/?url=" autocomplete="off" autocapitalize="off" spellcheck="false"></label>' +
+    '<div class="btns"><button class="pill" data-close>Annuler</button><button class="pill p" id="ok">Enregistrer</button></div></div>', function (sh) {
+    sh.querySelectorAll('.radio').forEach(function (b) {
+      b.onclick = function () { st[b.dataset.k] = b.dataset.v; sh.querySelectorAll('.radio[data-k="' + b.dataset.k + '"]').forEach(function (x) { x.classList.toggle('on', x === b); }); };
+    });
+    sh.querySelectorAll('.sw').forEach(function (b) { b.onclick = function () { st[b.dataset.sw] = !st[b.dataset.sw]; b.classList.toggle('on', st[b.dataset.sw]); }; });
+    sh.querySelector('#ok').onclick = function () {
+      var relaunch = st.fmt !== cfg.fmt;
+      cfg.fmt = st.fmt; cfg.autoq = st.autoq; cfg.logos = st.logos; cfg.relay = $('fR').value.trim();
+      saveCfg(); closeSheet(); drawList(true);
+      if (relaunch && S.playing) play(S.playing, S.aq && S.aq.ctx);
+      toast('Paramètres enregistrés');
+    };
+  });
+}
+
+function rowMenu(it) {
+  if (!it || it.kind !== 'play') return;
+  if (navigator.vibrate) try { navigator.vibrate(10); } catch (e) {}
+  sheet('<div class="sh"><h2 style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(it.name) + '</h2></div>' +
+    '<div class="menu"><button id="mP">▶  Lire</button><button id="mF">' + (isFav(it) ? '★  Retirer des favoris' : '☆  Ajouter aux favoris') + '</button>' +
+    '<button id="mG">☰  Guide TV</button><button data-close>Annuler</button></div>', function (sh) {
+    sh.querySelector('#mP').onclick = function () { closeSheet(); play(it, S.rows); };
+    sh.querySelector('#mF').onclick = function () { toggleFav(it); closeSheet(); toast(isFav(it) ? 'Ajouté aux favoris' : 'Retiré des favoris'); };
+    sh.querySelector('#mG').onclick = function () { openEpg(it); };
+  });
+}
+
+function openEpg(it) {
+  sheet(head('Guide TV') + '<div class="irow" style="margin-bottom:10px">' + tileHtml(it.name, it.logo) + '<b style="font-size:16px">' + esc(it.name) + '</b></div>' +
+    '<div class="sb2" id="epgBody"><div class="empty"><span class="spin" style="display:inline-block"></span></div></div>' +
+    '<div class="btns" style="justify-content:flex-start"><button class="pill p" id="w">▶  Regarder</button><button class="pill" id="fv">' + (isFav(it) ? '★ Favori' : '☆ Favori') + '</button></div>', function (sh) {
+    sh.querySelector('#w').onclick = function () { closeSheet(); play(it, S.rows); };
+    sh.querySelector('#fv').onclick = function () { toggleFav(it); this.textContent = isFav(it) ? '★ Favori' : '☆ Favori'; };
+    progsFor(it).then(function (progs) {
+      var t = now();
+      progs = progs.filter(function (p) { return p[1] > t; });
+      var body = sh.querySelector('#epgBody'); if (!body) return;
+      body.innerHTML = progs.length ? progs.map(function (p) {
+        var live = p[0] <= t && t < p[1];
+        return '<div class="ep' + (live ? ' live' : '') + '"><div class="tm">' + hm(p[0]) + ' – ' + hm(p[1]) + (live ? '<em>EN DIRECT</em>' : '') + '</div>' +
+          '<b>' + esc(p[2] || 'Programme') + '</b>' + (p[3] ? '<p>' + esc(p[3]) + '</p>' : '') + '</div>';
+      }).join('') : '<div class="empty">' + esc(epgMessage(it)) + '</div>';
+    });
+  });
+}
+
+// ============================================================ football en direct (ESPN)
+var ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
+var FB_LEAGUES = ['fra.1', 'eng.1', 'esp.1', 'ita.1', 'ger.1', 'por.1', 'ned.1', 'uefa.champions', 'uefa.europa', 'fifa.world', 'fifa.friendly',
+  'uefa.nations', 'uefa.euro', 'uefa.euroq', 'fifa.worldq.uefa', 'caf.nations', 'conmebol.america'];
+var INTERNATIONAL = { 'fifa.world': 1, 'fifa.friendly': 1, 'uefa.nations': 1, 'uefa.euro': 1, 'uefa.euroq': 1, 'fifa.worldq.uefa': 1, 'caf.nations': 1, 'conmebol.america': 1 };
+var LEAGUE_FR = { 'fra.1': 'Ligue 1', 'eng.1': 'Premier League', 'esp.1': 'Liga', 'ita.1': 'Serie A', 'ger.1': 'Bundesliga', 'por.1': 'Liga Portugal',
+  'ned.1': 'Eredivisie', 'uefa.champions': 'Ligue des champions', 'uefa.europa': 'Ligue Europa', 'fifa.world': 'Coupe du monde', 'fifa.friendly': 'Match amical',
+  'uefa.nations': 'Ligue des nations', 'uefa.euro': 'Euro', 'uefa.euroq': 'Qualifications Euro', 'fifa.worldq.uefa': 'Qualifications Coupe du monde',
+  'caf.nations': 'CAN', 'conmebol.america': 'Copa América' };
+// Diffuseurs habituels en France, saison 2026-2027 (repris de la version PC)
+var RIGHTS_FR = { 'fra.1': 'Ligue 1+', 'uefa.champions': 'Canal+', 'uefa.europa': 'Canal+', 'eng.1': 'Canal+', 'esp.1': 'DAZN / Disney+', 'ita.1': 'DAZN', 'ger.1': 'beIN Sports', 'ned.1': 'DAZN' };
+var FOOT_WORDS = / (foot|football|ligue|league|liga|serie a|bundesliga|eredivisie|champions|europa|match|coupe|nations|amical|qualif|premier league|classique|derby) /;
+var SPORT_CH = /sport|foot|bein|canal|dazn|rmc|eurosport|ligue|prime|equipe|tf1|m6|w9|tmc|france ?[234]|disney|ppv|event/i;
+var FB_ALIASES = { 'psg': 'paris saint germain', 'paris sg': 'paris saint germain', 'paris saint germain': 'paris saint germain', 'om': 'marseille',
+  'olympique de marseille': 'marseille', 'ol': 'lyon', 'olympique lyonnais': 'lyon', 'losc': 'lille', 'asse': 'saint etienne', 'st etienne': 'saint etienne',
+  'barcelone': 'barcelona', 'barca': 'barcelona', 'seville': 'sevilla', 'seville fc': 'sevilla', 'naples': 'napoli', 'as rome': 'roma', 'rome': 'roma',
+  'milan ac': 'ac milan', 'inter milan': 'internazionale', 'inter': 'internazionale', 'juventus turin': 'juventus', 'atletico': 'atletico madrid',
+  'atletico de madrid': 'atletico madrid', 'bayern': 'bayern munich', 'bayern munchen': 'bayern munich', 'dortmund': 'borussia dortmund',
+  'leverkusen': 'bayer leverkusen', 'man city': 'manchester city', 'man utd': 'manchester united', 'manchester utd': 'manchester united', 'spurs': 'tottenham',
+  'sporting lisbonne': 'sporting cp', 'sporting portugal': 'sporting cp', 'benfica lisbonne': 'benfica', 'fc porto': 'porto', 'ajax amsterdam': 'ajax',
+  'psv eindhoven': 'psv', 'celtic glasgow': 'celtic', 'bruges': 'club brugge', 'etoile rouge de belgrade': 'red star belgrade', 'galatasaray istanbul': 'galatasaray',
+  'angleterre': 'england', 'allemagne': 'germany', 'espagne': 'spain', 'italie': 'italy', 'pays bas': 'netherlands', 'belgique': 'belgium', 'bresil': 'brazil',
+  'argentine': 'argentina', 'croatie': 'croatia', 'suisse': 'switzerland', 'maroc': 'morocco', 'algerie': 'algeria', 'tunisie': 'tunisia', 'senegal': 'senegal',
+  'ecosse': 'scotland', 'irlande': 'ireland', 'pays de galles': 'wales', 'autriche': 'austria', 'pologne': 'poland', 'danemark': 'denmark', 'suede': 'sweden',
+  'norvege': 'norway', 'turquie': 'turkey', 'grece': 'greece', 'hongrie': 'hungary', 'etats unis': 'united states', 'mexique': 'mexico', 'japon': 'japan',
+  'coree du sud': 'south korea' };
+var ALIAS_KEYS = Object.keys(FB_ALIASES).sort(function (a, b) { return b.length - a.length; });
+var STAT_FR = [['possessionPct', 'Possession'], ['totalShots', 'Tirs'], ['shotsOnTarget', 'Tirs cadrés'], ['wonCorners', 'Corners'], ['saves', 'Arrêts'],
+  ['foulsCommitted', 'Fautes'], ['yellowCards', 'Cartons jaunes'], ['redCards', 'Cartons rouges'], ['offsides', 'Hors-jeu'], ['totalPasses', 'Passes'],
+  ['accuratePasses', 'Passes réussies'], ['passPct', 'Précision des passes'], ['totalCrosses', 'Centres'], ['accurateCrosses', 'Centres réussis'],
+  ['totalLongBalls', 'Longs ballons'], ['effectiveTackles', 'Tacles réussis'], ['totalTackles', 'Tacles'], ['interceptions', 'Interceptions'],
+  ['effectiveClearance', 'Dégagements'], ['blockedShots', 'Tirs contrés']];
+var EVENT_FR = [['own goal', 'But contre son camp'], ['penalty - scored', 'But sur penalty'], ['penalty - missed', 'Penalty manqué'], ['penalty - saved', 'Penalty arrêté'],
+  ['goal', 'But'], ['yellow card', 'Carton jaune'], ['red card', 'Carton rouge'], ['substitution', 'Remplacement'], ['kickoff', 'Coup d\'envoi'], ['halftime', 'Mi-temps'],
+  ['end regular time', 'Fin du temps réglementaire'], ['start 2nd half', 'Reprise'], ['full time', 'Fin du match'], ['var', 'Arbitrage vidéo']];
+
+function fold(s) {
+  s = String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  return ' ' + s.replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+}
+function applyAliases(t) {
+  t = fold(t);
+  ALIAS_KEYS.forEach(function (k) { t = t.split(' ' + k + ' ').join(' ' + FB_ALIASES[k] + ' '); });
+  return t;
+}
+var TEAM_PREFIX = /^ (fc|afc|as|ac|ss|ssc|sc|rc|rcd|ogc|stade|olympique|real|sporting|cf|cd|ud|sd|vfb|vfl|tsg|sv|1 fc) /;
+function teamKeys(t) {
+  var keys = {};
+  [t.name, t.short, t.raw].forEach(function (v) {
+    if (!v) return;
+    var f = fold(v); keys[f] = 1;
+    var core = f.replace(TEAM_PREFIX, ' ');
+    if (core.trim().length >= 4) keys[core] = 1;
+  });
+  return Object.keys(keys).filter(function (k) { return k.trim().length >= 3; });
+}
+function teamIn(txt, t) { return teamKeys(t).some(function (k) { return txt.indexOf(k) >= 0; }); }
+function rightsFor(m) {
+  if (INTERNATIONAL[m.slug]) {
+    if (fold(m.home.name) === ' france ' || fold(m.away.name) === ' france ') return 'TF1';
+    if (m.slug === 'uefa.nations' || m.slug === 'fifa.friendly') return 'L\'Équipe (selon les matchs)';
+    return '';
+  }
+  return RIGHTS_FR[m.slug] || '';
+}
+function matchTime(m) { var t = Date.parse(m.date); return isNaN(t) ? 0 : t / 1000; }
+function statNum(v) { var n = parseFloat(String(v == null ? '' : v).replace('%', '').replace(',', '.')); return isNaN(n) ? 0 : n; }
+function espn(path) {
+  return fetch(ESPN + path, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('ESPN ' + r.status); return r.json(); });
+}
+function parseScoreboard(js, slug) {
+  var out = [];
+  (js.events || []).forEach(function (ev) {
+    var comp = (ev.competitions || [])[0] || {};
+    var st = comp.status || ev.status || {}, typ = st.type || {}, sides = {};
+    (comp.competitors || []).forEach(function (c) {
+      var t = c.team || {}, nm = t.displayName || t.name || '?';
+      sides[c.homeAway || 'home'] = { id: String(t.id || ''), name: nm, short: t.shortDisplayName || nm, raw: t.name, abbr: t.abbreviation || nm.slice(0, 3).toUpperCase(),
+        logo: t.logo || ((t.logos || [])[0] || {}).href || null, score: c.score == null ? '' : String(c.score) };
+    });
+    if (sides.home && sides.away) out.push({ id: String(ev.id), slug: slug, league: LEAGUE_FR[slug] || '', state: typ.state || 'pre', clock: st.displayClock || '',
+      detail: typ.shortDetail || typ.detail || '', date: ev.date || '', home: sides.home, away: sides.away });
+  });
+  return out;
+}
+function fetchMatches() {
+  var d = new Date(), day = d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+  var errors = [];
+  return Promise.all(FB_LEAGUES.map(function (slug) {
+    return espn('/' + slug + '/scoreboard?dates=' + day).then(function (js) { return parseScoreboard(js, slug); })
+      .catch(function (e) { errors.push(e.message); return []; });
+  })).then(function (lists) {
+    var seen = {}, all = [];
+    lists.forEach(function (l) { l.forEach(function (m) { if (!seen[m.id]) { seen[m.id] = 1; all.push(m); } }); });
+    if (!all.length && errors.length) throw new Error('ESPN injoignable (' + errors[0] + ')');
+    var order = { 'in': 0, 'pre': 1, 'post': 2 };
+    return all.sort(function (a, b) { return (order[a.state] - order[b.state]) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0); });
+  });
+}
+function detectMatch(ms, text) {
+  var t = applyAliases(text), best = null, bs = 0;
+  ms.forEach(function (m) {
+    var h = teamIn(t, m.home), a = teamIn(t, m.away);
+    var sc = ((h ? 1 : 0) + (a ? 1 : 0)) * 10 + ({ 'in': 3, 'pre': 1, 'post': 0 }[m.state] || 0);
+    if ((h || a) && sc > bs) { best = m; bs = sc; }
+  });
+  return bs >= 13 ? best : null;
+}
+function findChannels(ms, guide) {
+  var res = {};
+  ms.forEach(function (m) {
+    var t0 = matchTime(m); if (!t0) return;
+    var hk = teamKeys(m.home), ak = teamKeys(m.away), found = [];
+    guide.forEach(function (g) {
+      for (var i = 0; i < g[1].length; i++) {
+        var p = g[1][i];
+        if (!((t0 - 2400 <= p[0] && p[0] <= t0 + 1800) || (p[0] <= t0 && t0 < p[1]))) continue;
+        var txt = applyAliases(p[2] + ' ' + p[3]);
+        var h = hk.some(function (k) { return txt.indexOf(k) >= 0; }), a = ak.some(function (k) { return txt.indexOf(k) >= 0; });
+        if ((h && a) || ((h || a) && FOOT_WORDS.test(txt))) { found.push(g[0]); break; }
+      }
+    });
+    if (found.length) {
+      var best = {}, order = [];
+      found.forEach(function (it) { var b = baseName(it.name); if (!best[b]) { order.push(b); best[b] = it; } else if (qualityOf(it.name) > qualityOf(best[b].name)) best[b] = it; });
+      res[m.id] = order.slice(0, 3).map(function (b) { return best[b]; });
+    }
+  });
+  return res;
+}
+function sportGuide() {
+  if (S.source === 'm3u' && S.epg) {
+    var seen = {}, out = [];
+    S.m3u.forEach(function (x) {
+      if (!(FR_RE.test(x.cat) || FR_RE.test(x.name) || SPORT_CH.test(x.name))) return;
+      var p = S.epg[x.key] || S.epg[x.ln];
+      if (p && !seen[x.key]) { seen[x.key] = 1; out.push([x, p]); }
+    });
+    return Promise.resolve(out);
+  }
+  if (S.source !== 'xtream') return Promise.resolve([]);
+  var c = S.sportCache;
+  if (c && c.server === S.xt.server && Date.now() - c.at < 1800000) return Promise.resolve(c.data);
+  return xtApi({ action: 'get_live_categories' }).then(function (cats) {
+    cats = Array.isArray(cats) ? cats : [];
+    var fr = cats.filter(function (x) { return FR_RE.test(x.category_name || ''); });
+    var pick = fr.filter(function (x) { return SPORT_CH.test(x.category_name || ''); });
+    if (!pick.length) pick = fr.slice(0, 6);
+    return Promise.all(pick.slice(0, 12).map(function (cc) {
+      return xtApi({ action: 'get_live_streams', category_id: cc.category_id }).then(function (d) { return [cc, d]; }).catch(function () { return [cc, []]; });
+    }));
+  }).then(function (lists) {
+    var best = {}, order = [];
+    lists.forEach(function (l) {
+      xtItems(l[1], 'live').forEach(function (it) {
+        if (!SPORT_CH.test(it.name) && !SPORT_CH.test(l[0].category_name || '')) return;
+        var b = baseName(it.name);
+        if (!best[b]) { order.push(b); best[b] = it; } else if (qualityOf(it.name) > qualityOf(best[b].name)) best[b] = it;
+      });
+    });
+    var items = order.slice(0, 60).map(function (b) { return best[b]; }), results = [], i = 0;
+    function batch() {
+      if (i >= items.length) return Promise.resolve(results);
+      var part = items.slice(i, i + 8); i += 8;
+      return Promise.all(part.map(function (it) {
+        return xtApi({ action: 'get_short_epg', stream_id: it.sid, limit: 40 }).then(function (d) {
+          var p = ((d && d.epg_listings) || []).map(function (x) { return [toInt(x.start_timestamp), toInt(x.stop_timestamp), b64(x.title), b64(x.description).slice(0, 300)]; })
+            .filter(function (x) { return x[0] && x[1]; });
+          if (p.length) results.push([it, p]);
+        }).catch(function () {});
+      })).then(batch);
+    }
+    return batch();
+  }).then(function (r) { S.sportCache = { server: S.xt.server, at: Date.now(), data: r }; return r; }).catch(function () { return []; });
+}
+function rating(s, pos, gf, ga, state) {
+  function g() { for (var i = 0; i < arguments.length; i++) if (s[arguments[i]] != null) return s[arguments[i]]; return 0; }
+  var goals = g('totalGoals', 'goals'), assists = g('goalAssists', 'assists'), sot = g('shotsOnTarget'), shots = g('totalShots');
+  var r = 6 + goals * 1.1 + assists * 0.7 + sot * 0.15 + Math.max(0, shots - sot) * 0.03;
+  r += g('foulsSuffered') * 0.05 - g('foulsCommitted') * 0.07 - g('offsides') * 0.05;
+  r -= g('yellowCards') * 0.4 + g('redCards') * 1.8 + g('ownGoals') * 1.2;
+  var p = (pos || '')[0];
+  if (p === 'G') r += g('saves') * 0.3 - ga * 0.35;
+  if ((p === 'G' || p === 'D') && state !== 'pre') r += ga === 0 ? 0.5 : -0.15 * ga;
+  r += gf > ga ? 0.2 : gf < ga ? -0.2 : 0;
+  return Math.round(Math.max(3, Math.min(10, r)) * 10) / 10;
+}
+function ratingColor(r) { return r >= 7.5 ? '#3ddc97' : r >= 6.8 ? '#4f9cff' : r >= 6 ? '#f5a623' : '#ff5c7a'; }
+function parseSummary(js, m) {
+  var out = { stats: [], events: [], players: { home: [], away: [] } };
+  var hdr = ((js.header || {}).competitions || [])[0] || {}, ids = {};
+  ids[m.home.id] = 'home'; ids[m.away.id] = 'away';
+  (hdr.competitors || []).forEach(function (c) {
+    var side = c.homeAway || ids[String((c.team || {}).id)];
+    if (side === 'home' || side === 'away') m[side].score = c.score == null ? m[side].score : String(c.score);
+  });
+  if (hdr.status) { var ty = hdr.status.type || {}; m.state = ty.state || m.state; m.clock = hdr.status.displayClock || m.clock; m.detail = ty.shortDetail || ty.detail || m.detail; }
+  var box = js.boxscore || {}, teams = box.teams || box.statistics || [], per = {}, ord = {};
+  teams.forEach(function (t, i) {
+    var side = t.homeAway || ids[String((t.team || {}).id)] || (i === 0 ? 'home' : 'away');
+    per[side] = {}; ord[side] = [];
+    (t.statistics || []).forEach(function (s) { if (s.name) { per[side][s.name] = [s.displayValue != null ? s.displayValue : s.value, s.label || s.name]; ord[side].push(s.name); } });
+  });
+  if (per.home && per.away) {
+    var fr = {}; STAT_FR.forEach(function (x) { fr[x[0]] = x[1]; });
+    var names = STAT_FR.map(function (x) { return x[0]; }).filter(function (k) { return per.home[k] && per.away[k]; });
+    ord.home.forEach(function (k) { if (per.away[k] && !fr[k]) names.push(k); });
+    names.slice(0, 22).forEach(function (k) { out.stats.push([fr[k] || per.home[k][1], String(per.home[k][0]), String(per.away[k][0]), k === 'possessionPct']); });
+  }
+  (js.keyEvents || []).forEach(function (e) {
+    var typ = ((e.type || {}).text || '').trim(), low = typ.toLowerCase();
+    var lab = typ; for (var i = 0; i < EVENT_FR.length; i++) if (low.indexOf(EVENT_FR[i][0]) >= 0) { lab = EVENT_FR[i][1]; break; }
+    var who = (e.participants || []).map(function (p) { return (p.athlete || {}).displayName || ''; }).filter(Boolean).join(', ');
+    var kind = (e.scoringPlay || low.indexOf('goal') >= 0) ? 'goal' : low.indexOf('yellow') >= 0 ? 'yellow' : low.indexOf('red') >= 0 ? 'red' : low.indexOf('substitution') >= 0 ? 'sub' : 'info';
+    out.events.push({ minute: (e.clock || {}).displayValue || '', label: lab, who: who, side: ids[String((e.team || {}).id)], kind: kind, text: String(e.shortText || e.text || '').slice(0, 220) });
+  });
+  var score = { home: toInt(m.home.score), away: toInt(m.away.score) };
+  (js.rosters || []).forEach(function (r, i) {
+    var side = r.homeAway || ids[String((r.team || {}).id)] || (i === 0 ? 'home' : 'away');
+    if (!out.players[side]) return;
+    var other = side === 'home' ? 'away' : 'home';
+    (r.roster || []).forEach(function (p) {
+      if (!(p.starter || p.subbedIn)) return;
+      var st = {}; (p.stats || []).forEach(function (s) { if (s.name) st[s.name] = statNum(s.value != null ? s.value : s.displayValue); });
+      var pos = ((p.position || {}).abbreviation || '').toUpperCase(), ath = p.athlete || {};
+      out.players[side].push({ name: ath.displayName || ath.shortName || '?', jersey: String(p.jersey || ''), pos: pos, starter: !!p.starter, stats: st,
+        rating: rating(st, pos, score[side], score[other], m.state) });
+    });
+  });
+  var o = { G: 0, D: 1, M: 2, F: 3, A: 3 };
+  ['home', 'away'].forEach(function (s) { out.players[s].sort(function (a, b) { return (a.starter ? 0 : 1) - (b.starter ? 0 : 1) || (o[a.pos[0]] == null ? 2 : o[a.pos[0]]) - (o[b.pos[0]] == null ? 2 : o[b.pos[0]]); }); });
+  return out;
+}
+
+var Foot = { matches: [], match: null, data: null, chans: {}, tab: 'stats', list: false, manual: false, loading: false, open: false, timer: null, foot: '', lastList: 0,
+  onChannelChange: function () { this.manual = false; if (this.open) this.refreshList(true); }
+};
+Foot.footText = function () {
+  var m = this.match; if (!m) return this.foot;
+  return 'Données ESPN · mise à jour ' + (m.state === 'in' ? 'toutes les 30 s' : 'toutes les 2 min') + (this.tab === 'players' ? '\nNote Brutus : calculée à partir des stats du match' : '');
+};
+Foot.schedule = function () {
+  var self = this; clearTimeout(this.timer);
+  if (!this.open) return;
+  this.timer = setTimeout(function () {
+    if (!self.open) return;
+    if (self.list || !self.match) self.refreshList(!self.manual); else self.refreshSummary();
+  }, this.match && this.match.state === 'in' ? 30000 : 120000);
+};
+Foot.refreshList = function (detect) {
+  var self = this; if (this.loading) return;
+  this.loading = true; this.foot = 'Recherche du match…'; renderMatch();
+  var ms;
+  fetchMatches().then(function (r) { ms = r; return sportGuide(); }).then(function (guide) {
+    self.matches = ms; self.chans = findChannels(ms, guide); self.lastList = Date.now();
+    if (self.match) self.match = ms.filter(function (x) { return x.id === self.match.id; })[0] || self.match;
+    var found = null;
+    if (detect && S.playing) {
+      var t = now(), txt = S.playProgs.filter(function (p) { return p[1] > t; }).slice(0, 2).map(function (p) { return p[2] + ' ' + p[3]; }).join(' ');
+      found = detectMatch(ms, S.playing.name + ' ' + txt);
+    }
+    self.loading = false;
+    if (found && !self.manual) return self.select(found);
+    self.foot = self.match ? self.footText() : 'Aucun match reconnu sur cette chaîne. Choisis-le dans « Matchs du jour ».';
+    renderMatch(); self.schedule();
+  }).catch(function (e) { self.loading = false; self.foot = 'Données indisponibles : ' + e.message; renderMatch(); self.schedule(); });
+};
+Foot.refreshSummary = function () {
+  var self = this, m = this.match; if (!m || this.loading) return;
+  this.loading = true; renderMatch();
+  espn('/' + m.slug + '/summary?event=' + m.id).then(function (js) {
+    self.loading = false;
+    if (self.match !== m) return;
+    self.data = parseSummary(js, m); self.foot = self.footText(); renderMatch(); self.schedule();
+  }).catch(function (e) { self.loading = false; self.foot = 'Stats indisponibles pour ce match (' + e.message + ')'; renderMatch(); self.schedule(); });
+};
+Foot.select = function (m) { this.match = m; this.data = null; this.list = false; renderMatch(); this.refreshSummary(); };
+
+function openMatch() {
+  Foot.open = true;
+  var sc = sheet('<div class="mtop"><span class="lbl">⚽  MATCH EN DIRECT</span><button class="pill" id="mList" style="height:32px">Matchs du jour</button>' +
+    '<button class="ib" data-close aria-label="Fermer" style="width:32px;height:32px">' + ICON.close + '</button></div><div id="mBody" class="sb2" style="display:flex;flex-direction:column"></div><div class="foot" id="mFoot"></div>', function (sh) {
+    sh.style.height = '88%';
+    sh.querySelector('#mList').onclick = function () {
+      Foot.list = !Foot.list; renderMatch();
+      if (Foot.list && Date.now() - Foot.lastList > 60000) Foot.refreshList(false);
+    };
+  });
+  sc._onclose = function () { Foot.open = false; clearTimeout(Foot.timer); };
+  renderMatch();
+  if (!Foot.match) Foot.refreshList(true); else Foot.refreshSummary();
+}
+
+function teamTile(t, sz) { return '<span class="tile sq" style="background:' + tileColor(t.name) + ';width:' + sz + 'px;height:' + sz + 'px">' + esc(initials(t.name)) + (t.logo ? '<img src="' + esc(t.logo) + '" alt="" onerror="this.remove()">' : '') + '</span>'; }
+function renderMatch() {
+  var body = $('mBody'); if (!body) return;
+  var lb = $('mList'); if (lb) lb.classList.toggle('on', Foot.list);
+  $('mFoot').innerHTML = (Foot.loading ? '<span class="spin" style="display:inline-block;width:11px;height:11px;border-width:2px;vertical-align:-1px;margin-right:6px"></span>' : '') + esc(Foot.foot);
+  if (Foot.list) {
+    body.innerHTML = Foot.matches.length ? Foot.matches.map(function (m, i) {
+      var title = m.state === 'pre' ? m.home.short + ' – ' + m.away.short + '  ·  ' + m.detail
+        : m.home.short + ' ' + m.home.score + '-' + m.away.score + ' ' + m.away.short + '  ·  ' + (m.state === 'in' ? m.clock : 'Terminé');
+      var ch = Foot.chans[m.id], r = rightsFor(m), tv = ch ? '▶ ' + ch[0].name : (r ? 'TV : ' + r : '');
+      var sub = ch ? tv + '  ·  ' + m.league : [m.league, tv].filter(Boolean).join('  ·  ');
+      var sel = Foot.match && Foot.match.id === m.id;
+      return '<button class="mrow' + (sel ? ' sel' : '') + '" data-m="' + i + '">' + teamTile(m.home, 40) + '<span class="tx"><b>' + esc(title) + '</b><small class="' + (ch ? 'tv' : '') + '">' + esc(sub) + '</small></span>' +
+        (m.state === 'in' ? '<span class="row" style="position:static;padding:0"><span class="dot"></span></span>' : '') + '</button>';
+    }).join('') : '<div class="empty">' + (Foot.loading ? 'Chargement des matchs…' : 'Aucun match aujourd\'hui dans les 7 grands championnats, la LDC, la Ligue Europa ou en sélections.') + '</div>';
+    body.querySelectorAll('[data-m]').forEach(function (b) { b.onclick = function () { Foot.manual = true; Foot.select(Foot.matches[+b.dataset.m]); }; });
+    return;
+  }
+  var m = Foot.match, h = '';
+  if (!m) h += '<div class="score none">Lance un match pour le détecter<br>automatiquement</div>';
+  else {
+    var tag = m.state === 'in' ? (m.clock || 'Direct') : m.state === 'post' ? 'Terminé' : (m.detail || 'À venir');
+    h += '<div class="score"><div class="tm">' + teamTile(m.home, 44) + esc(m.home.short) + '</div><div class="mid"><div class="sc">' +
+      (m.state !== 'pre' ? esc((m.home.score || 0) + '  -  ' + (m.away.score || 0)) : 'vs') + '</div><div class="st' + (m.state === 'in' ? ' in' : '') + '">' + esc(tag) + '</div>' +
+      (m.league ? '<div class="lg">' + esc(m.league) + '</div>' : '') + '</div><div class="tm">' + teamTile(m.away, 44) + esc(m.away.short) + '</div></div>';
+    var r = rightsFor(m), ch = Foot.chans[m.id];
+    h += '<div class="tvrow"><span>' + esc(ch ? (r ? 'Dans ta liste  ·  ' + r : 'Dans ta liste') : (r ? 'Diffuseur : ' + r : 'Diffuseur : non renseigné')) + '</span>' +
+      (ch ? '<button class="pill p" id="mPlay">▶  ' + esc(ch[0].name) + '</button>' : '') + '</div>';
+  }
+  h += '<div class="seg">' + [['stats', 'Stats'], ['events', 'Temps forts'], ['players', 'Joueurs']].map(function (t) { return '<button data-t="' + t[0] + '" class="' + (Foot.tab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>';
+  h += '<div>' + (!m ? '<div class="empty">Aucun match sélectionné.</div>' : !Foot.data ? '<div class="empty">Chargement…</div>' : matchTab(m, Foot.data)) + '</div>';
+  body.innerHTML = h;
+  body.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { Foot.tab = b.dataset.t; Foot.foot = Foot.footText(); renderMatch(); }; });
+  var mp = $('mPlay');
+  if (mp) mp.onclick = function () { var ch = Foot.chans[m.id]; closeSheet(); play(ch[0], ch); };
+}
+function matchTab(m, d) {
+  if (Foot.tab === 'stats') {
+    if (!d.stats.length) return '<div class="empty">Statistiques pas encore disponibles.</div>';
+    return d.stats.map(function (s) {
+      var a = statNum(s[1]), b = statNum(s[2]), tot = a + b;
+      var bars = s[3] ? '<div class="pos"><i style="width:' + ((tot ? a / tot : 0.5) * 100).toFixed(1) + '%"></i></div>'
+        : '<div class="sbars"><div><i style="width:' + (tot ? a / tot * 100 : 0).toFixed(1) + '%;background:var(--blue)"></i></div><div><i style="width:' + (tot ? b / tot * 100 : 0).toFixed(1) + '%;background:var(--violet)"></i></div></div>';
+      return '<div class="stat"><div class="l"><b class="' + (a >= b ? '' : 'lo') + '">' + esc(s[1]) + '</b><span>' + esc(s[0]) + '</span><b class="' + (b >= a ? '' : 'lo') + '">' + esc(s[2]) + '</b></div>' + bars + '</div>';
+    }).join('');
+  }
+  if (Foot.tab === 'events') {
+    var evs = d.events.filter(function (e) { return e.kind !== 'info' || ['Mi-temps', 'Fin du match', 'Coup d\'envoi', 'Reprise'].indexOf(e.label) >= 0; });
+    if (!evs.length) return '<div class="empty">Aucun temps fort pour l\'instant.</div>';
+    return evs.slice().reverse().map(function (e) {
+      var ic = e.kind === 'goal' ? '⚽' : e.kind === 'yellow' ? '<span class="card" style="background:#ffd23f"></span>' : e.kind === 'red' ? '<span class="card" style="background:var(--red)"></span>'
+        : e.kind === 'sub' ? '<span style="color:var(--green);font-weight:700">⇄</span>' : '<span style="color:var(--dim)">•</span>';
+      var team = (e.side === 'home' || e.side === 'away') ? m[e.side].abbr : '';
+      var sub = e.who || e.text;
+      return '<div class="ev"><span class="mn">' + esc(e.minute || '–') + '</span><span class="ic">' + ic + '</span><div><b class="' + (e.kind === 'goal' ? 'goal' : '') + '">' +
+        esc(e.label + (team ? '  ·  ' + team : '')) + '</b>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div></div>';
+    }).join('');
+  }
+  var posfr = { G: 'GB', D: 'DEF', M: 'MIL', F: 'ATT', A: 'ATT' }, h = '';
+  if (!d.players.home.length && !d.players.away.length) return '<div class="empty">Compositions pas encore disponibles.</div>';
+  ['home', 'away'].forEach(function (side) {
+    var pl = d.players[side]; if (!pl.length) return;
+    var best = Math.max.apply(null, pl.map(function (p) { return p.rating; }));
+    h += '<div class="team">' + teamTile(m[side], 26) + esc(m[side].name) + '</div>';
+    pl.forEach(function (p) {
+      var st = p.stats, bits = [];
+      if (st.totalGoals) bits.push(st.totalGoals + ' but' + (st.totalGoals > 1 ? 's' : ''));
+      if (st.goalAssists) bits.push(st.goalAssists + ' passe déc.');
+      if (st.totalShots) bits.push(st.totalShots + ' tirs (' + (st.shotsOnTarget || 0) + ' cadrés)');
+      if (st.saves) bits.push(st.saves + ' arrêts');
+      if (st.yellowCards) bits.push('carton jaune');
+      if (st.redCards) bits.push('carton rouge');
+      var info = (posfr[p.pos[0]] || p.pos) + (p.starter ? '' : ' · entré') + (bits.length ? '  ·  ' + bits.join(', ') : '');
+      h += '<div class="pl' + (p.starter ? ' st' : '') + '"><span class="j">' + esc(p.jersey || '–') + '</span><span class="tx"><b>' + (p.rating === best ? '★ ' : '') + esc(p.name) +
+        '</b><small>' + esc(info) + '</small></span><span class="r" style="background:' + ratingColor(p.rating) + '">' + p.rating.toFixed(1) + '</span></div>';
+    });
+  });
+  return h;
+}
+
+// ============================================================ branchements
+$('avatar').onclick = openPlaylists;
+$('btnAdd').onclick = openAdd;
+$('btnSet').onclick = openSettings;
+$('back').onclick = back;
+$('bPlay').onclick = togglePlay;
+$('bStop').onclick = stop;
+$('bFav').onclick = function () { toggleFav(); };
+$('bMatch').onclick = openMatch;
+$('bFs').onclick = fullscreen;
+$('vbox').addEventListener('dblclick', fullscreen);
+$('nav').onclick = function (e) { var b = e.target.closest('button'); if (b && b.dataset.k !== S.mode) setMode(b.dataset.k); };
+var searchTimer = null;
+$('search').addEventListener('input', function () {
+  $('clr').hidden = !this.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilter, 220);
+});
+$('search').addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
+$('clr').onclick = function (e) { e.preventDefault(); clearSearch(); applyFilter(); };
+
+setVState('idle'); updateFav(); renderNav();
+setStatus('Ouvre une playlist enregistrée, charge une liste M3U ou connecte-toi à un serveur Xtream.');
+renderEmpty('Ajoute une playlist avec le bouton <b>+</b> en haut à droite.');
+if (cfg.last && (cfg.last.server || cfg.last.src)) openPlaylist(cfg.last);
+
+window.__brutus = { S: S, cfg: cfg, openPlaylist: openPlaylist, play: play, openMatch: openMatch };
+})();
+</script>
+</body>
+</html>
