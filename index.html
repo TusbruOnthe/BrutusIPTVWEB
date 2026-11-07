@@ -1039,6 +1039,12 @@ function diagnose() {
     lines.pop();
     lines.push('<b>Test réseau</b> échec : ' + esc(e.name + ' ' + e.message));
     lines.push('→ soit le flux redirige vers http://, soit le serveur refuse les pages web. Le relais (⚙ Paramètres, avec « vidéo par le relais ») contourne les deux.');
+  }).then(function () {
+    if (!cfg.relay) return;
+    lines.push('<b>Test via le relais</b> en cours…'); out();
+    return fetch(cfg.relay + encodeURIComponent(url) + '&debug=1', { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+      lines.pop(); lines.push('<b>Chemin du flux (relais)</b>\n' + esc(mask(t).slice(0, 900)));
+    }).catch(function (e) { lines.pop(); lines.push('<b>Relais</b> injoignable : ' + esc(e.message)); });
   }).finally(function () { clearTimeout(tm); out(); });
 }
 
